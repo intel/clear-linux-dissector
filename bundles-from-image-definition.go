@@ -28,13 +28,14 @@ func main() {
 	}
 	flag.Parse()
 
-	f, err := os.Open("/usr/lib/os-release")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
 
 	if (clear_version == -1) {
+		f, err := os.Open("/usr/lib/os-release")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -61,7 +62,7 @@ func main() {
 	}
 
 	if (resp.Status != "200 OK") {
-		fmt.Printf("image %s for version %d was not found on the server\n",
+		fmt.Printf("Image \"%s\" for version %d was not found on the server\n",
 			image_name, clear_version)
 		os.Exit(-1)
 	}
