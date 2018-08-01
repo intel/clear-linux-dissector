@@ -97,9 +97,10 @@ func main() {
 		pkg = fmt.Sprintf("\"%s\"", pkg)
 		if !visited[pkg] {
 			dump_package_deps(graph, pkg, visited)
-			for k, _ := range visited {
-				fmt.Println(strings.Replace(k, "\"", "", 2))
-			}
 		}
 	}
+	for k, _ := range visited {
+		fmt.Println(strings.Replace(k, "\"", "", 2))
+	}
+
 }
