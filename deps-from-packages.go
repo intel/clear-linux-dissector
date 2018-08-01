@@ -49,6 +49,20 @@ func main() {
 	}
 	flag.Parse()
 
+	args := flag.Args()
+
+	info, err := os.Stdin.Stat()
+	if err != nil {
+		log.Fatal()
+	}
+	if info.Mode() & os.ModeNamedPipe != 0 {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			new_args := strings.Split(scanner.Text(), " ")
+			args = append(args, new_args...)
+		}
+	}
+
 	if (filename == "") {
 		fmt.Println("No dependency graph file provided")
 		flag.Usage()
@@ -79,7 +93,7 @@ func main() {
 	}
 
 	visited := make(map[string]bool)
-	for _, pkg := range flag.Args() {
+	for _, pkg := range args {
 		pkg = fmt.Sprintf("\"%s\"", pkg)
 		if !visited[pkg] {
 			dump_package_deps(graph, pkg, visited)
