@@ -66,6 +66,9 @@ func main() {
 	var graph_filename string
 	flag.StringVar(&graph_filename, "dependency_graph", "",
 		"Input dependency graph file")
+
+	var dump_all bool
+	flag.BoolVar(&dump_all, "dump_all", false, "Dump all bundles")
 	
 	flag.Usage = func() {
 		fmt.Printf("USAGE for %s\n", os.Args[0])
@@ -202,12 +205,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	
 	visited := make(map[string]bool)
-	for pkg, _ := range pkgs_before_deps {
-		pkg = fmt.Sprintf("\"%s\"", pkg)
-		if !visited[pkg] {
-			dump_package_deps(graph, pkg, visited)
+	if dump_all {
+		for _, v := range bundles {
+			for _, vv := range v {
+				visited[vv] = true
+			}
+		}
+	} else {
+		for pkg, _ := range pkgs_before_deps {
+			pkg = fmt.Sprintf("\"%s\"", pkg)
+			if !visited[pkg] {
+				dump_package_deps(graph, pkg, visited)
+			}
 		}
 	}
 	for k, _ := range visited {
