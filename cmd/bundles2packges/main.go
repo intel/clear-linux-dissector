@@ -26,27 +26,32 @@ func name_from_header(header string, version int) string {
 }
 
 func dump_package_deps(g *gographviz.Graph, p string, visited map[string]bool) []string {
-	var ret []string;
+	var res []string;
 	visited[p] = true
-	for edge_name, edge := range g.Edges.SrcToDsts {
-		if edge_name == p {
-			for destination, _ := range edge {
-				for relation_name, relation := range g.Relations.ParentToChildren {
-					if destination == relation_name {
-						for dname, _ := range relation {
+
+	// Walk dependency graph from source to destinations,
+	// recursing on each destination package the first time
+	// it is seen
+	for emap_key, emap := range g.Edges.SrcToDsts {
+		if emap_key == p {
+			for edge_key, _ := range emap {
+				for rmap_key, rmap := range g.Relations.ParentToChildren {
+					if rmap_key == edge_key {
+						for dname, _ := range rmap {
 							if !visited[dname] {
+								// recurse over newly uncovered packages to resolve additional deps
 								for _, pname := range dump_package_deps(g, dname, visited) {
-									ret = append(ret, pname)
+									res = append(res, pname)
 								}
 							}
-							ret = append(ret, dname)
+							res = append(res, dname)
 						}
 					}
 				}
 			}
 		}
 	}
-	return ret
+	return res
 }
 
 func main() {
