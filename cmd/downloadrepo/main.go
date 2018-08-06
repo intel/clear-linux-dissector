@@ -2,101 +2,17 @@ package main
 
 import (
 	"bufio"
+	"clr-dissector/internal/downloader"
+	"clr-dissector/internal/repolib"
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"github.com/dustin/go-humanize"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 )
-
-type Pkgs struct {
-	XMLName xml.Name `xml:"repomd"`
-	Data    []Data   `xml:"data"`
-}
-
-type Data struct {
-	XMLName      xml.Name     `xml:"data"`
-	Type         string       `xml:"type,attr"`
-	Location     Location     `xml:"location"`
-	Checksum     Checksum     `xml:"checksum"`
-	OpenChecksum OpenChecksum `xml:"open-checksum"`
-}
-
-type Location struct {
-	XMLName xml.Name `xml:"location"`
-	Href    string   `xml:"href,attr"`
-}
-
-type Checksum struct {
-	XMLName xml.Name `xml:"checksum"`
-	Type    string   `xml:"type,attr"`
-	Value   string   `xml:",chardata"`
-}
-
-type OpenChecksum struct {
-	XMLName xml.Name `xml:"open-checksum"`
-	Type    string   `xml:"type,attr"`
-	Value   string   `xml:",chardata"`
-}
-
-type WriteCounter struct {
-	Total uint64
-	Name  string
-}
-
-func (wc *WriteCounter) Write(p []byte) (int, error) {
-	n := len(p)
-	wc.Total += uint64(n)
-	wc.PrintProgress()
-	return n, nil
-}
-func (wc WriteCounter) PrintProgress() {
-	fmt.Printf("\r%s", strings.Repeat(" ", 80))
-	fmt.Printf("\rDownloading %s... %s complete", wc.Name, humanize.Bytes(wc.Total))
-}
-
-func DownloadFile(filepath string, url string) error {
-	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
-		return nil
-	}
-
-	tmp := filepath + ".tmp"
-
-	// temporary file
-	out, err := os.Create(tmp)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	counter := &WriteCounter{Name: filepath}
-	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
-	if err != nil {
-		return err
-	}
-
-	// Clear the progress output
-	fmt.Print("\n")
-
-	// download was successful so rename temporary file
-	err = os.Rename(tmp, filepath)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func main() {
 	var clear_version int
@@ -171,7 +87,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var pkgs Pkgs
+	var pkgs repolib.Pkgs
 	xml.Unmarshal(body, &pkgs)
 	for i := 0; i < len(pkgs.Data); i++ {
 		href := pkgs.Data[i].Location.Href
@@ -181,25 +97,25 @@ func main() {
 
 		if strings.HasSuffix(href, "other.xml.gz") {
 			t := fmt.Sprintf("%d/repodata/other.xml.gz", clear_version)
-			err := DownloadFile(t, url)
+			err := downloader.DownloadFile(t, url)
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if strings.HasSuffix(href, "primary.xml.gz") {
 			t := fmt.Sprintf("%d/repodata/primary.xml.gz", clear_version)
-			err := DownloadFile(t, url)
+			err := downloader.DownloadFile(t, url)
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if strings.HasSuffix(href, "comps.xml.xz") {
 			t := fmt.Sprintf("%d/repodata/comps.xml.xz", clear_version)
-			err := DownloadFile(t, url)
+			err := downloader.DownloadFile(t, url)
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if strings.HasSuffix(href, "filelists.xml.gz") {
 			t := fmt.Sprintf("%d/repodata/filelist.xml.gz", clear_version)
-			err := DownloadFile(t, url)
+			err := downloader.DownloadFile(t, url)
 			if err != nil {
 				log.Fatal(err)
 			}
