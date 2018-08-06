@@ -14,8 +14,9 @@ import (
 
 type WriteCounter struct {
 	Total uint64
-	Name string
+	Name  string
 }
+
 func (wc *WriteCounter) Write(p []byte) (int, error) {
 	n := len(p)
 	wc.Total += uint64(n)
@@ -48,7 +49,7 @@ func DownloadFile(filepath string, url string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Clear the progress output
 	fmt.Print("\n")
 
@@ -73,7 +74,7 @@ func main() {
 	var mapping_file string
 	flag.StringVar(&mapping_file, "mapping", "",
 		"File containing mapping of binary to source rpm filenames")
-	
+
 	flag.Usage = func() {
 		fmt.Printf("USAGE for %s\n", os.Args[0])
 		flag.PrintDefaults()
@@ -86,7 +87,7 @@ func main() {
 	if err != nil {
 		log.Fatal()
 	}
-	if info.Mode() & os.ModeNamedPipe != 0 {
+	if info.Mode()&os.ModeNamedPipe != 0 {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			new_args := strings.Split(scanner.Text(), " ")
@@ -94,7 +95,7 @@ func main() {
 		}
 	}
 
-	if (clear_version == -1) {
+	if clear_version == -1 {
 		f, err := os.Open("/usr/lib/os-release")
 		if err != nil {
 			log.Fatal(err)
@@ -111,7 +112,7 @@ func main() {
 		}
 	}
 
-	if (mapping_file == "") {
+	if mapping_file == "" {
 		fmt.Println("No mapping file provided")
 		flag.Usage()
 		os.Exit(-1)

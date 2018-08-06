@@ -10,10 +10,10 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
-	"net/http"
 )
 
 func name_from_header(header string, version int) string {
@@ -22,11 +22,11 @@ func name_from_header(header string, version int) string {
 	if len(match) == 0 {
 		return ""
 	}
-	return match[len(match) - 1]
+	return match[len(match)-1]
 }
 
 func dump_package_deps(g *gographviz.Graph, p string, visited map[string]bool) []string {
-	var res []string;
+	var res []string
 	visited[p] = true
 
 	// Walk dependency graph from source to destinations,
@@ -34,10 +34,10 @@ func dump_package_deps(g *gographviz.Graph, p string, visited map[string]bool) [
 	// it is seen
 	for emap_key, emap := range g.Edges.SrcToDsts {
 		if emap_key == p {
-			for edge_key, _ := range emap {
+			for edge_key := range emap {
 				for rmap_key, rmap := range g.Relations.ParentToChildren {
 					if rmap_key == edge_key {
-						for dname, _ := range rmap {
+						for dname := range rmap {
 							if !visited[dname] {
 								// recurse over newly uncovered packages to resolve additional deps
 								for _, pname := range dump_package_deps(g, dname, visited) {
@@ -69,7 +69,7 @@ func main() {
 
 	var dump_all bool
 	flag.BoolVar(&dump_all, "dump_all", false, "Dump all bundles")
-	
+
 	flag.Usage = func() {
 		fmt.Printf("USAGE for %s\n", os.Args[0])
 		flag.PrintDefaults()
@@ -82,7 +82,7 @@ func main() {
 	if err != nil {
 		log.Fatal()
 	}
-	if info.Mode() & os.ModeNamedPipe != 0 {
+	if info.Mode()&os.ModeNamedPipe != 0 {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			new_args := strings.Split(scanner.Text(), " ")
@@ -90,13 +90,13 @@ func main() {
 		}
 	}
 
-	if (graph_filename == "") {
+	if graph_filename == "" {
 		fmt.Println("No dependency graph file provided")
 		flag.Usage()
 		os.Exit(-1)
 	}
 
-	if (clear_version == -1) {
+	if clear_version == -1 {
 		f, err := os.Open("/usr/lib/os-release")
 		if err != nil {
 			log.Fatal(err)
@@ -112,18 +112,18 @@ func main() {
 			}
 		}
 	}
-	
+
 	config_url := fmt.Sprintf("%s/archive/%d.tar.gz",
 		base_url, clear_version)
 
 	resp, err := http.Get(config_url)
 	if err != nil {
 		log.Fatal(err)
-		
+
 	}
 	defer resp.Body.Close()
 
-	if (resp.Status != "200 OK") {
+	if resp.Status != "200 OK" {
 		fmt.Printf("clr-bundle release archive not found on server:\n%s\n",
 			config_url)
 		os.Exit(-1)
@@ -143,9 +143,9 @@ func main() {
 		header, err := tr.Next()
 
 		if err == io.EOF {
-			break;
+			break
 		}
-		
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -185,7 +185,7 @@ func main() {
 		for _, b := range deps[target_bundle] {
 			for _, p := range bundles[b] {
 				pkgs_before_deps[p] = true
-			}			
+			}
 		}
 	}
 
@@ -205,7 +205,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	visited := make(map[string]bool)
 	if dump_all {
 		for _, v := range bundles {
@@ -214,14 +214,14 @@ func main() {
 			}
 		}
 	} else {
-		for pkg, _ := range pkgs_before_deps {
+		for pkg := range pkgs_before_deps {
 			pkg = fmt.Sprintf("\"%s\"", pkg)
 			if !visited[pkg] {
 				dump_package_deps(graph, pkg, visited)
 			}
 		}
 	}
-	for k, _ := range visited {
+	for k := range visited {
 		fmt.Println(strings.Replace(k, "\"", "", 2))
 	}
 }

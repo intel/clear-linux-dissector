@@ -15,8 +15,8 @@ import (
 )
 
 type Pkgs struct {
-	XMLName  xml.Name `xml:"repomd"`
-	Data     []Data   `xml:"data"`
+	XMLName xml.Name `xml:"repomd"`
+	Data    []Data   `xml:"data"`
 }
 
 type Data struct {
@@ -46,8 +46,9 @@ type OpenChecksum struct {
 
 type WriteCounter struct {
 	Total uint64
-	Name string
+	Name  string
 }
+
 func (wc *WriteCounter) Write(p []byte) (int, error) {
 	n := len(p)
 	wc.Total += uint64(n)
@@ -84,7 +85,7 @@ func DownloadFile(filepath string, url string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Clear the progress output
 	fmt.Print("\n")
 
@@ -118,7 +119,7 @@ func main() {
 	if err != nil {
 		log.Fatal()
 	}
-	if info.Mode() & os.ModeNamedPipe != 0 {
+	if info.Mode()&os.ModeNamedPipe != 0 {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			new_args := strings.Split(scanner.Text(), " ")
@@ -126,7 +127,7 @@ func main() {
 		}
 	}
 
-	if (clear_version == -1) {
+	if clear_version == -1 {
 		f, err := os.Open("/usr/lib/os-release")
 		if err != nil {
 			log.Fatal(err)
@@ -150,7 +151,7 @@ func main() {
 	resp, err := http.Get(config_url)
 	if err != nil {
 		log.Fatal(err)
-		
+
 	}
 	defer resp.Body.Close()
 
@@ -158,7 +159,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if (resp.Status != "200 OK") {
+	if resp.Status != "200 OK" {
 		fmt.Printf("Unable to find release %d on %s",
 			clear_version, base_url)
 		os.Exit(-1)
@@ -169,8 +170,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	
+
 	var pkgs Pkgs
 	xml.Unmarshal(body, &pkgs)
 	for i := 0; i < len(pkgs.Data); i++ {
