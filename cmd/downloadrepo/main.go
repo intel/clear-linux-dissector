@@ -2,14 +2,10 @@ package main
 
 import (
 	"bufio"
-	"clr-dissector/internal/downloader"
 	"clr-dissector/internal/repolib"
-	"encoding/xml"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 )
@@ -60,65 +56,8 @@ func main() {
 		}
 	}
 
-	config_url := fmt.Sprintf(
-		"%s/releases/%d/clear/x86_64/os/repodata/repomd.xml",
-		base_url, clear_version)
-
-	resp, err := http.Get(config_url)
+	err = repolib.DownloadRepo(clear_version, base_url)
 	if err != nil {
 		log.Fatal(err)
-
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if resp.Status != "200 OK" {
-		fmt.Printf("Unable to find release %d on %s",
-			clear_version, base_url)
-		os.Exit(-1)
-	}
-
-	path := fmt.Sprintf("%d/repodata", clear_version)
-	err = os.MkdirAll(path, 0700)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var pkgs repolib.Pkgs
-	xml.Unmarshal(body, &pkgs)
-	for i := 0; i < len(pkgs.Data); i++ {
-		href := pkgs.Data[i].Location.Href
-		url := fmt.Sprintf(
-			"%s/releases/%d/clear/x86_64/os/%s",
-			base_url, clear_version, href)
-
-		if strings.HasSuffix(href, "other.xml.gz") {
-			t := fmt.Sprintf("%d/repodata/other.xml.gz", clear_version)
-			err := downloader.DownloadFile(t, url)
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if strings.HasSuffix(href, "primary.xml.gz") {
-			t := fmt.Sprintf("%d/repodata/primary.xml.gz", clear_version)
-			err := downloader.DownloadFile(t, url)
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if strings.HasSuffix(href, "comps.xml.xz") {
-			t := fmt.Sprintf("%d/repodata/comps.xml.xz", clear_version)
-			err := downloader.DownloadFile(t, url)
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if strings.HasSuffix(href, "filelists.xml.gz") {
-			t := fmt.Sprintf("%d/repodata/filelist.xml.gz", clear_version)
-			err := downloader.DownloadFile(t, url)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
 	}
 }
