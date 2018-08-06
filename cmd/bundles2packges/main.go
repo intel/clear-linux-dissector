@@ -3,6 +3,7 @@ package main
 import (
 	"archive/tar"
 	"bufio"
+	"clr-dissector/internal/common"
 	"compress/gzip"
 	"flag"
 	"fmt"
@@ -97,19 +98,11 @@ func main() {
 	}
 
 	if clear_version == -1 {
-		f, err := os.Open("/usr/lib/os-release")
+		clear_version, err = common.GetInstalledVersion()
 		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
-
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			line := scanner.Text()
-			_, err := fmt.Sscanf(line, "VERSION_ID=%d", &clear_version)
-			if err == nil {
-				break
-			}
+			fmt.Println("A version must be specified when not " +
+				"running on a Clear Linux instance!")
+			os.Exit(-1)
 		}
 	}
 
