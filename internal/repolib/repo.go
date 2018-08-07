@@ -2,13 +2,18 @@ package repolib
 
 import (
 	"clr-dissector/internal/downloader"
+	"database/sql"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/http"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	_ "github.com/mutecomm/go-sqlcipher"
+	"github.com/ulikunitz/xz"
 )
 
 type Repomd struct {
@@ -62,8 +67,12 @@ func DownloadRepo(version int, url string) error {
 			version, url))
 	}
 
-	path := fmt.Sprintf("%d/repodata", version)
-	err = os.MkdirAll(path, 0700)
+	err = os.MkdirAll(fmt.Sprintf("%d/repodata", version), 0700)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(fmt.Sprintf("%d/source", version), 0700)
 	if err != nil {
 		return err
 	}
@@ -83,8 +92,12 @@ func DownloadRepo(version int, url string) error {
 				return err
 			}
 		} else if strings.HasSuffix(href, "primary.sqlite.xz") {
-			t := fmt.Sprintf("%d/repodata/primary.sqlite.xz", version)
-			err := downloader.DownloadFile(t, url)
+			t := fmt.Sprintf("%d/repodata/primary.sqlite", version)
+			err := downloader.DownloadFile(t+".xz", url)
+			if err != nil {
+				return err
+			}
+			err = UnXz(t+".xz", t)
 			if err != nil {
 				return err
 			}
@@ -101,6 +114,59 @@ func DownloadRepo(version int, url string) error {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func GetPkgMap(version int) (map[string]string, error) {
+	pmap := make(map[string]string)
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
+		version))
+	if err != nil {
+		return pmap, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("select name, rpm_sourcerpm from packages;")
+	if err != nil {
+		return pmap, nil
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name, srpm string
+		err := rows.Scan(&name, &srpm)
+		if err != nil {
+			return pmap, nil
+		}
+		pmap[name] = srpm
+	}
+	
+
+	return pmap, nil
+}
+
+func UnXz(gazin, gazout string) error {
+	f, err := os.Open(gazin)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	r, err := xz.NewReader(f)
+	if err != nil {
+		return err
+	}
+
+	w, err := os.Create(gazout)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+	
+	if _, err = io.Copy(w, r); err != nil {
+		return err
 	}
 
 	return nil

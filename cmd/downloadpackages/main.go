@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"clr-dissector/internal/common"
 	"clr-dissector/internal/downloader"
+	"clr-dissector/internal/repolib"
 	"log"
 	"os"
 	"strings"
@@ -19,10 +20,6 @@ func main() {
 	flag.StringVar(&base_url, "url",
 		"https://cdn.download.clearlinux.org",
 		"Base URL for downloading release source rpms")
-
-	var mapping_file string
-	flag.StringVar(&mapping_file, "mapping", "",
-		"File containing mapping of binary to source rpm filenames")
 
 	flag.Usage = func() {
 		fmt.Printf("USAGE for %s\n", os.Args[0])
@@ -53,30 +50,16 @@ func main() {
 		}
 	}
 
-	if mapping_file == "" {
-		fmt.Println("No mapping file provided")
-		flag.Usage()
-		os.Exit(-1)
-	}
-	f, err := os.Open(mapping_file)
+	// Download repo data if needed and initialize directory structure
+	err = repolib.DownloadRepo(clear_version, base_url)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
 
-	srpmMap := make(map[string]string)
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		var bname string
-		var sname string
-		_, err := fmt.Sscanf(line, "%s %s", &bname, &sname)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		srpmMap[bname] = sname
+	// Query db for map of binary to source packages
+	srpmMap, err := repolib.GetPkgMap(clear_version)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	downloads := make(map[string]string)
@@ -89,13 +72,8 @@ func main() {
 			base_url, clear_version, srpmMap[p])
 	}
 
-	// create cache directory if it doesn't already exist
-	err = os.MkdirAll(".srpm_cache", 0700)
-	if err != nil {
-		log.Fatal(err)
-	}
 	for fname, url := range downloads {
-		target := ".srpm_cache/" + fname
+		target := fmt.Sprintf("%d/source/%s", clear_version, fname)
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			continue
 		}
