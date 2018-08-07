@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-type Pkgs struct {
+type Repomd struct {
 	XMLName xml.Name `xml:"repomd"`
 	Data    []Data   `xml:"data"`
 }
@@ -68,22 +68,22 @@ func DownloadRepo(version int, url string) error {
 		return err
 	}
 
-	var pkgs Pkgs
-	xml.Unmarshal(body, &pkgs)
-	for i := 0; i < len(pkgs.Data); i++ {
-		href := pkgs.Data[i].Location.Href
+	var repomd Repomd
+	xml.Unmarshal(body, &repomd)
+	for i := 0; i < len(repomd.Data); i++ {
+		href := repomd.Data[i].Location.Href
 		url := fmt.Sprintf(
 			"%s/releases/%d/clear/x86_64/os/%s",
 			url, version, href)
 
-		if strings.HasSuffix(href, "other.xml.gz") {
-			t := fmt.Sprintf("%d/repodata/other.xml.gz", version)
+		if strings.HasSuffix(href, "other.sqlite.xz") {
+			t := fmt.Sprintf("%d/repodata/other.sqlite.xz", version)
 			err := downloader.DownloadFile(t, url)
 			if err != nil {
 				return err
 			}
-		} else if strings.HasSuffix(href, "primary.xml.gz") {
-			t := fmt.Sprintf("%d/repodata/primary.xml.gz", version)
+		} else if strings.HasSuffix(href, "primary.sqlite.xz") {
+			t := fmt.Sprintf("%d/repodata/primary.sqlite.xz", version)
 			err := downloader.DownloadFile(t, url)
 			if err != nil {
 				return err
@@ -94,8 +94,8 @@ func DownloadRepo(version int, url string) error {
 			if err != nil {
 				return err
 			}
-		} else if strings.HasSuffix(href, "filelists.xml.gz") {
-			t := fmt.Sprintf("%d/repodata/filelist.xml.gz", version)
+		} else if strings.HasSuffix(href, "filelists.sqlite.xz") {
+			t := fmt.Sprintf("%d/repodata/filelist.sqlite.xz", version)
 			err := downloader.DownloadFile(t, url)
 			if err != nil {
 				return err
