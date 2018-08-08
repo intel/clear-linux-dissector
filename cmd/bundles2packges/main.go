@@ -4,12 +4,11 @@ import (
 	"archive/tar"
 	"bufio"
 	"clr-dissector/internal/common"
+	"clr-dissector/internal/repolib"
 	"compress/gzip"
 	"flag"
 	"fmt"
-	"github.com/awalterschulze/gographviz"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -26,35 +25,6 @@ func name_from_header(header string, version int) string {
 	return match[len(match)-1]
 }
 
-func dump_package_deps(g *gographviz.Graph, p string, visited map[string]bool) []string {
-	var res []string
-	visited[p] = true
-
-	// Walk dependency graph from source to destinations,
-	// recursing on each destination package the first time
-	// it is seen
-	for emap_key, emap := range g.Edges.SrcToDsts {
-		if emap_key == p {
-			for edge_key := range emap {
-				for rmap_key, rmap := range g.Relations.ParentToChildren {
-					if rmap_key == edge_key {
-						for dname := range rmap {
-							if !visited[dname] {
-								// recurse over newly uncovered packages to resolve additional deps
-								for _, pname := range dump_package_deps(g, dname, visited) {
-									res = append(res, pname)
-								}
-							}
-							res = append(res, dname)
-						}
-					}
-				}
-			}
-		}
-	}
-	return res
-}
-
 func main() {
 	var clear_version int
 	flag.IntVar(&clear_version, "clear_version", -1, "Clear Linux version")
@@ -63,13 +33,6 @@ func main() {
 	flag.StringVar(&base_url, "url",
 		"https://github.com/clearlinux/clr-bundles",
 		"Base URL for downloading release archives of clr-bundles")
-
-	var graph_filename string
-	flag.StringVar(&graph_filename, "dependency_graph", "",
-		"Input dependency graph file")
-
-	var dump_all bool
-	flag.BoolVar(&dump_all, "dump_all", false, "Dump all bundles")
 
 	flag.Usage = func() {
 		fmt.Printf("USAGE for %s\n", os.Args[0])
@@ -89,12 +52,6 @@ func main() {
 			new_args := strings.Split(scanner.Text(), " ")
 			args = append(args, new_args...)
 		}
-	}
-
-	if graph_filename == "" {
-		fmt.Println("No dependency graph file provided")
-		flag.Usage()
-		os.Exit(-1)
 	}
 
 	if clear_version == -1 {
@@ -182,39 +139,20 @@ func main() {
 		}
 	}
 
-	f, err := os.Open(graph_filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
+	// use a map to remove duplicate entries
+	results := make(map[string]bool)
 
-	reader := bufio.NewReader(f)
-	content, err := ioutil.ReadAll(reader)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	graph, err := gographviz.Read(content)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	visited := make(map[string]bool)
-	if dump_all {
-		for _, v := range bundles {
-			for _, vv := range v {
-				visited[vv] = true
-			}
+	for pkg := range pkgs_before_deps {
+		pkgs, err := repolib.GetDirectDeps(pkg, clear_version)
+		if err != nil {
+			log.Fatal(err)
 		}
-	} else {
-		for pkg := range pkgs_before_deps {
-			pkg = fmt.Sprintf("\"%s\"", pkg)
-			if !visited[pkg] {
-				dump_package_deps(graph, pkg, visited)
-			}
+		for _, p := range pkgs {
+			results[p] = true
 		}
 	}
-	for k := range visited {
-		fmt.Println(strings.Replace(k, "\"", "", 2))
+
+	for p := range results {
+		fmt.Println(p)
 	}
 }
