@@ -3,7 +3,7 @@ package repolib
 import (
 	"archive/tar"
 	"bufio"
-	"clr-dissector/internal/downloader"
+	"github.intel.com/crlynch/clr-dissector/internal/downloader"
 	"compress/gzip"
 	"database/sql"
 	"encoding/xml"

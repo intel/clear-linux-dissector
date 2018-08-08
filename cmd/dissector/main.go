@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
-	"clr-dissector/internal/common"
-	"clr-dissector/internal/downloader"
-	"clr-dissector/internal/repolib"
+	"github.intel.com/crlynch/clr-dissector/internal/common"
+	"github.intel.com/crlynch/clr-dissector/internal/downloader"
+	"github.intel.com/crlynch/clr-dissector/internal/repolib"
 	"flag"
 	"fmt"
 	"log"

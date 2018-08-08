@@ -1,7 +1,7 @@
 package main
 
 import (
-	"clr-dissector/internal/common"
+	"github.intel.com/crlynch/clr-dissector/internal/common"
 	"encoding/json"
 	"flag"
 	"fmt"
