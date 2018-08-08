@@ -62,10 +62,7 @@ func main() {
 	var config map[string]interface{}
 	json.Unmarshal(body, &config)
 	bundles := config["Bundles"].([]interface{})
-
-	s := make([]string, 0)
 	for _, value := range bundles {
-		s = append(s, value.(string))
+		fmt.Println(value)
 	}
-	fmt.Println(s)
 }
