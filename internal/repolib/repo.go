@@ -1,15 +1,20 @@
 package repolib
 
 import (
+	"archive/tar"
+	"bufio"
 	"clr-dissector/internal/downloader"
+	"compress/gzip"
 	"database/sql"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"net/http"
 	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	_ "github.com/mutecomm/go-sqlcipher"
@@ -142,7 +147,6 @@ func GetPkgMap(version int) (map[string]string, error) {
 		}
 		pmap[name] = srpm
 	}
-	
 
 	return pmap, nil
 }
@@ -164,7 +168,7 @@ func UnXz(gazin, gazout string) error {
 		return err
 	}
 	defer w.Close()
-	
+
 	if _, err = io.Copy(w, r); err != nil {
 		return err
 	}
@@ -174,7 +178,7 @@ func UnXz(gazin, gazout string) error {
 
 func getdeps(db *sql.DB, name string, visited map[string]bool) error {
 	// Query list of requirements for the given package
-	q := fmt.Sprintf("select requires.name from packages inner join requires " +
+	q := fmt.Sprintf("select requires.name from packages inner join requires "+
 		"where packages.pkgKey=requires.pkgKey and packages.name='%s';", name)
 	rows, err := db.Query(q)
 	if err != nil {
@@ -195,8 +199,8 @@ func getdeps(db *sql.DB, name string, visited map[string]bool) error {
 	// Query list of packages that meet the found requirements
 	pmap := make(map[string]bool)
 	for p := range rmap {
-		q := fmt.Sprintf("select packages.name from packages " +
-			"inner join provides where packages.pkgKey=provides.pkgKey " +
+		q := fmt.Sprintf("select packages.name from packages "+
+			"inner join provides where packages.pkgKey=provides.pkgKey "+
 			"and provides.name='%s';", p)
 		rows, err := db.Query(q)
 		if err != nil {
@@ -213,7 +217,7 @@ func getdeps(db *sql.DB, name string, visited map[string]bool) error {
 			pmap[pname] = true
 		}
 	}
-	
+
 	for p := range pmap {
 		if !visited[p] {
 			visited[p] = true
@@ -242,9 +246,87 @@ func GetDirectDeps(name string, version int) ([]string, error) {
 	getdeps(db, name, visited)
 
 	var res []string
-	for p, _ := range visited {
+	for p := range visited {
 		res = append(res, p)
 	}
 	return res, nil
 }
 
+func name_from_header(header string, version int) string {
+	re := regexp.MustCompile(`clr-bundles-[1-9].*/bundles/(.*)`)
+	match := re.FindStringSubmatch(header)
+	if len(match) == 0 {
+		return ""
+	}
+	return match[len(match)-1]
+}
+
+func GetBundles(clear_version int, base_url string) (map[string][]string, map[string][]string, error) {
+	bundles := make(map[string][]string)
+	deps := make(map[string][]string)
+
+	config_url := fmt.Sprintf("%s/archive/%d.tar.gz",
+		base_url, clear_version)
+
+	resp, err := http.Get(config_url)
+	if err != nil {
+		return deps, bundles, err
+
+	}
+	defer resp.Body.Close()
+
+	if resp.Status != "200 OK" {
+		err := errors.New("clr-bundle release archive not found on server: " +
+			config_url)
+		return deps, bundles, err
+	}
+
+	gzr, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		return deps, bundles, err
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+
+	for {
+		header, err := tr.Next()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if header == nil {
+			continue
+		}
+
+		bundle_name := name_from_header(header.Name, clear_version)
+		if bundle_name != "" {
+			scanner := bufio.NewScanner(tr)
+			for scanner.Scan() {
+				l := scanner.Text()
+
+				if len(l) == 0 || strings.HasPrefix(l, "#") {
+					continue
+				}
+
+				re := regexp.MustCompile(`include\((.*)\)`)
+				match := re.FindStringSubmatch(l)
+				if len(match) == 2 {
+					// depends on another bundle
+					deps[bundle_name] = append(deps[bundle_name],
+						match[1])
+				} else {
+					bundles[bundle_name] = append(bundles[bundle_name], l)
+				}
+			}
+		}
+
+	}
+
+	return deps, bundles, nil
+}
