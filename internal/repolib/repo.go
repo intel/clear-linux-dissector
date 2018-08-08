@@ -130,7 +130,7 @@ func GetPkgMap(version int) (map[string]string, error) {
 
 	rows, err := db.Query("select name, rpm_sourcerpm from packages;")
 	if err != nil {
-		return pmap, nil
+		return pmap, err
 	}
 	defer rows.Close()
 
@@ -170,4 +170,132 @@ func UnXz(gazin, gazout string) error {
 	}
 
 	return nil
+}
+
+func getdeps(db *sql.DB, name string, visited map[string]bool) error {
+	// Query list of requirements for the given package
+	q := fmt.Sprintf("select requires.name from packages inner join requires " +
+		"where packages.pkgKey=requires.pkgKey and packages.name='%s';", name)
+	rows, err := db.Query(q)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	rmap := make(map[string]bool)
+	for rows.Next() {
+		var rname string
+		err := rows.Scan(&rname)
+		if err != nil {
+			return err
+		}
+		rmap[rname] = true
+	}
+
+	// Query list of packages that meet the found requirements
+	pmap := make(map[string]bool)
+	for p := range rmap {
+		q := fmt.Sprintf("select packages.name from packages " +
+			"inner join provides where packages.pkgKey=provides.pkgKey " +
+			"and provides.name='%s';", p)
+		rows, err := db.Query(q)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var pname string
+			err := rows.Scan(&pname)
+			if err != nil {
+				return err
+			}
+			pmap[pname] = true
+		}
+	}
+	
+	for p := range pmap {
+		if !visited[p] {
+			visited[p] = true
+			err := getdeps(db, p, visited)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func GetDirectDeps(name string, version int) ([]string, error) {
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
+		version))
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	visited := make(map[string]bool)
+	getdeps(db, name, visited)
+
+	var res []string
+	for p, _ := range visited {
+		res = append(res, p)
+	}
+	return res, nil
+}
+
+func GetDirectDeps2(name string, version int) ([]string, error) {
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
+		version))
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	// Query list of requirements for the given package
+	q := fmt.Sprintf("select requires.name from packages inner join requires " +
+		"where packages.pkgKey=requires.pkgKey and packages.name='%s';", name)
+	rows, err := db.Query(q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rmap := make(map[string]bool)
+	for rows.Next() {
+		var rname string
+		err := rows.Scan(&rname)
+		if err != nil {
+			return nil, err
+		}
+		rmap[rname] = true
+	}
+
+	// Query list of packages that meet the found requirements
+	pmap := make(map[string]bool)
+	for p := range rmap {
+		q := fmt.Sprintf("select packages.name from packages " +
+			"inner join provides where packages.pkgKey=provides.pkgKey " +
+			"and provides.name='%s';", p)
+		rows, err := db.Query(q)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var pname string
+			err := rows.Scan(&pname)
+			if err != nil {
+				return nil, err
+			}
+			pmap[pname] = true
+		}
+	}
+	
+	res := make([]string, len(rmap))
+	for p := range pmap {
+		res = append(res, p)
+	}
+	return res, nil
 }
