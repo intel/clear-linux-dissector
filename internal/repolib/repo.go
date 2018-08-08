@@ -227,8 +227,12 @@ func getdeps(db *sql.DB, name string, visited map[string]bool) error {
 }
 
 func GetDirectDeps(name string, version int) ([]string, error) {
-	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
-		version))
+	dbpath := fmt.Sprintf("%d/repodata/primary.sqlite", version)
+	if _, err := os.Stat(dbpath); os.IsNotExist(err) {
+		return nil, errors.New("Missing DB: " + dbpath)
+	}
+
+	db, err := sql.Open("sqlite3", dbpath)
 	if err != nil {
 		return nil, err
 	}
