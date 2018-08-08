@@ -82,6 +82,11 @@ func DownloadRepo(version int, url string) error {
 		return err
 	}
 
+	err = os.MkdirAll(fmt.Sprintf("%d/srpms", version), 0700)
+	if err != nil {
+		return err
+	}
+
 	var repomd Repomd
 	xml.Unmarshal(body, &repomd)
 	for i := 0; i < len(repomd.Data); i++ {

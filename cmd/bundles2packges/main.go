@@ -70,6 +70,7 @@ func main() {
 	results := make(map[string]bool)
 
 	for pkg := range pkgs_before_deps {
+		results[pkg] = true
 		pkgs, err := repolib.GetDirectDeps(pkg, clear_version)
 		if err != nil {
 			log.Fatal(err)
