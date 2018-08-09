@@ -54,33 +54,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pkgs_before_deps := make(map[string]bool)
+	// Compile a complete list of packages from both the
+	// requested bundles and the bundle included from
+	// those bundles.
+	//
+	// This does not include additional packages that each
+	// of these packages depend on
+	pkgs := make(map[string]bool)
 	for _, target_bundle := range args {
+		if _, ok := bundles[target_bundle]; !ok {
+			fmt.Printf("Bundle %s does not exist!\n", target_bundle)
+			os.Exit(-1)
+		}
 		for _, p := range bundles[target_bundle] {
-			pkgs_before_deps[p] = true
+			pkgs[p] = true
 		}
 		for _, b := range deps[target_bundle] {
 			for _, p := range bundles[b] {
-				pkgs_before_deps[p] = true
+				pkgs[p] = true
 			}
 		}
 	}
-
-	// use a map to remove duplicate entries
-	results := make(map[string]bool)
-
-	for pkg := range pkgs_before_deps {
-		results[pkg] = true
-		pkgs, err := repolib.GetDirectDeps(pkg, clear_version)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, p := range pkgs {
-			results[p] = true
-		}
-	}
-
-	for p := range results {
+	for p := range pkgs {
 		fmt.Println(p)
 	}
 }
