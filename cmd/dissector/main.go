@@ -123,7 +123,15 @@ func main() {
 
 	// Unarchive the source rpms
 	for fname := range downloads {
-		f, err := os.Open(fmt.Sprintf("%d/srpms/%s", clear_version, fname))
+		archive := fmt.Sprintf("%d/srpms/%s", clear_version, fname)
+		target := fmt.Sprintf("%d/source/%s", clear_version,
+			strings.TrimSuffix(fname, ".src.rpm"))
+
+		if _, err := os.Stat(target); !os.IsNotExist(err) {
+			continue
+		}
+		fmt.Printf("Extracting %s to %s...\n", archive, target)
+		f, err := os.Open(archive)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -134,8 +142,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		target := fmt.Sprintf("%d/source/%s", clear_version,
-			strings.TrimSuffix(fname, ".src.rpm"))
 		err = rpm.ExpandPayload(target)
 		if err != nil {
 			log.Fatal(err)
