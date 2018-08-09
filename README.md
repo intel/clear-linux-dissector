@@ -68,7 +68,7 @@ USAGE for bundles2packages
   -url string
     	Base URL for downloading release archives of clr-bundles (default "https://github.com/clearlinux/clr-bundles")
 
-$ bundles2packages service-osglibc-lib-avx2
+$ bundles2packages service-os glibc-lib-avx2
 linux-firmware-ipu4
 linux-pk414-sos
 mcelog
