@@ -3,12 +3,12 @@ package repolib
 import (
 	"archive/tar"
 	"bufio"
-	"github.intel.com/crlynch/clr-dissector/internal/downloader"
 	"compress/gzip"
 	"database/sql"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.intel.com/crlynch/clr-dissector/internal/downloader"
 	"io"
 	"io/ioutil"
 	"log"

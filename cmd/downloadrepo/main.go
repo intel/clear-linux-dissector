@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
-	"github.intel.com/crlynch/clr-dissector/internal/common"
-	"github.intel.com/crlynch/clr-dissector/internal/repolib"
 	"flag"
 	"fmt"
+	"github.intel.com/crlynch/clr-dissector/internal/common"
+	"github.intel.com/crlynch/clr-dissector/internal/repolib"
 	"log"
 	"os"
 	"strings"

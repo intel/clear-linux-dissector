@@ -27,6 +27,6 @@ func GetInstalledVersion() (int, error) {
 	if res == 0 {
 		return res, errors.New("No installed version available!")
 	}
-	
+
 	return res, nil
 }

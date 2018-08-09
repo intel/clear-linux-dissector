@@ -2,11 +2,11 @@ package main
 
 import (
 	"bufio"
+	"flag"
+	"fmt"
 	"github.intel.com/crlynch/clr-dissector/internal/common"
 	"github.intel.com/crlynch/clr-dissector/internal/downloader"
 	"github.intel.com/crlynch/clr-dissector/internal/repolib"
-	"flag"
-	"fmt"
 	"log"
 	"os"
 	"strings"

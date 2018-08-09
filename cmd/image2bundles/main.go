@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.intel.com/crlynch/clr-dissector/internal/common"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.intel.com/crlynch/clr-dissector/internal/common"
 	"io/ioutil"
 	"log"
 	"net/http"
