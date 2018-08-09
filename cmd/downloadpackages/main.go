@@ -21,6 +21,10 @@ func main() {
 		"https://cdn.download.clearlinux.org",
 		"Base URL for downloading release source rpms")
 
+	var skip_download bool
+	flag.BoolVar(&skip_download, "skip", false,
+		"Skip downloading any source rpm files")
+
 	flag.Usage = func() {
 		fmt.Printf("USAGE for %s\n", os.Args[0])
 		flag.PrintDefaults()
@@ -74,6 +78,10 @@ func main() {
 
 	for fname, url := range downloads {
 		target := fmt.Sprintf("%d/source/%s", clear_version, fname)
+		if skip_download == true {
+			fmt.Printf("Skipping %s\n", url)
+			continue
+		}
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			continue
 		}
