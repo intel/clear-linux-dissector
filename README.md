@@ -130,15 +130,6 @@ Downloading 24320/repodata/other.sqlite.xz... 461 kB complete
 Downloading 24320/repodata/comps.xml.xz... 728 B complete
 ````
 
-#### Pulling all the utilites together
-
-````
-image2bundles -n service-os|bundles2packages |packages2packages |downloadpackages 
-Downloading 24320/source/libthai-0.1.28-6.src.rpm... 425 kB complete            
-Downloading 24320/source/shim-12-13.src.rpm... 1.0 MB complete 
-<snip>
-````
-
 #### downloadpackages
 
 ````
@@ -153,6 +144,34 @@ USAGE for downloadpackages
 $ downloadpackages weston
 Downloading 24320/source/weston-4.0.0-17.src.rpm... 1.3 MB complete
 
+````
+
+#### packages2source
+
+The packages2source utility takes a list of packages and returns a list of source rpm URLs.  The utility does not expand the list to include package dependencies.
+
+````
+$ packages2source --help
+USAGE for packages2source
+  -clear_version int
+        Clear Linux version (default -1)
+  -repo_url string
+        Base URL downloading releases (default "https://cdn.download.clearlinux.org")
+
+$ packages2source libc6
+https://cdn.download.clearlinux.org/releases/24330/clear/source/SRPMS/glibc-2.27-187.src.rpm
+
+````
+
+#### Piping the utilites together
+
+Each command can either take arguments on the commandline or piped in from stdin.  The following example shows how to initiate a download of all source packages for the currently installed Clear Linux version (where a specific version would need to be passed if this was run on some other OS) for the standard "service-os" image.
+
+````
+image2bundles -n service-os|bundles2packages |packages2packages |downloadpackages
+Downloading 24320/source/libthai-0.1.28-6.src.rpm... 425 kB complete
+Downloading 24320/source/shim-12-13.src.rpm... 1.0 MB complete
+<snip>
 ````
 
 
