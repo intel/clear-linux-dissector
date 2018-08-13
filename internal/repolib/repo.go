@@ -144,6 +144,40 @@ func DownloadRepo(version int, url string) error {
 	return nil
 }
 
+func GetFilesMap(version int) (map[int]map[string]bool, error) {
+	res := make(map[int]map[string]bool)
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/filelist.sqlite",
+		version))
+	if err != nil {
+		return res, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("select pkgKey, dirname, filenames from filelist")
+	if err != nil {
+		return res, err
+	}
+	defer rows.Close()
+
+	var key int
+	var dirname, filenames string
+	for rows.Next() {
+		err := rows.Scan(&key, &dirname, &filenames)
+		if err != nil {
+			return nil, err
+		}
+
+		if res[key] == nil {
+			res[key] = make(map[string]bool)
+		}
+		for _, n := range strings.Split(filenames, "/") {
+			res[key][fmt.Sprintf("%s/%s", dirname, n)] = true
+		}
+	}
+
+	return res, nil
+}
+
 func GetFiles(version, key int) ([]string, error) {
 	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/filelist.sqlite",
 		version))
@@ -201,6 +235,34 @@ func GetPkgKey(version int, name string) (int, error) {
 	}
 
 	return res, errors.New(fmt.Sprintf("%s: Unknown package!", name))
+}
+
+func GetPkgName(version, key int) (string, error) {
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
+		version))
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+
+	q := fmt.Sprintf("select name from packages where pkgKey='%d';", key)
+	rows, err := db.Query(q)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	var res string
+	for rows.Next() {
+		err := rows.Scan(&res)
+		if err != nil {
+			return "", err
+		}
+
+		return res, nil
+	}
+
+	return res, errors.New(fmt.Sprintf("%d: Unknown package key!", key))
 }
 
 func GetPkgMap(version int) (map[string]string, error) {
