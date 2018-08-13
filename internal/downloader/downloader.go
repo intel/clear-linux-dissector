@@ -1,6 +1,9 @@
 package downloader
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/dustin/go-humanize"
 	"io"
@@ -26,7 +29,7 @@ func (wc WriteCounter) PrintProgress() {
 		humanize.Bytes(wc.Total))
 }
 
-func DownloadFile(filepath string, url string) error {
+func DownloadFile(filepath, url, checksum string) error {
 	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
 		return nil
 	}
@@ -54,6 +57,24 @@ func DownloadFile(filepath string, url string) error {
 
 	// Clear the progress output
 	fmt.Print("\n")
+
+	if checksum != "" {
+		f, err := os.Open(tmp)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		hash := sha256.New()
+		if _, err := io.Copy(hash, f); err != nil {
+			return err
+		}
+
+		if hex.EncodeToString(hash.Sum(nil)) != checksum {
+			os.Remove(tmp)
+			return errors.New("Failed download checksum!")
+		}
+	}
 
 	// download was successful so rename temporary file
 	err = os.Rename(tmp, filepath)

@@ -85,7 +85,7 @@ func main() {
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			continue
 		}
-		err := downloader.DownloadFile(target, url)
+		err := downloader.DownloadFile(target, url, "")
 		if err != nil {
 			log.Fatal(err)
 		}

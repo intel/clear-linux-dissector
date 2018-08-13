@@ -91,19 +91,20 @@ func DownloadRepo(version int, url string) error {
 	xml.Unmarshal(body, &repomd)
 	for i := 0; i < len(repomd.Data); i++ {
 		href := repomd.Data[i].Location.Href
+		cs := repomd.Data[i].Checksum.Value
 		url := fmt.Sprintf(
 			"%s/releases/%d/clear/x86_64/os/%s",
 			url, version, href)
 
 		if strings.HasSuffix(href, "other.sqlite.xz") {
 			t := fmt.Sprintf("%d/repodata/other.sqlite.xz", version)
-			err := downloader.DownloadFile(t, url)
+			err := downloader.DownloadFile(t, url, cs)
 			if err != nil {
 				return err
 			}
 		} else if strings.HasSuffix(href, "primary.sqlite.xz") {
 			t := fmt.Sprintf("%d/repodata/primary.sqlite", version)
-			err := downloader.DownloadFile(t+".xz", url)
+			err := downloader.DownloadFile(t+".xz", url, cs)
 			if err != nil {
 				return err
 			}
@@ -113,13 +114,13 @@ func DownloadRepo(version int, url string) error {
 			}
 		} else if strings.HasSuffix(href, "comps.xml.xz") {
 			t := fmt.Sprintf("%d/repodata/comps.xml.xz", version)
-			err := downloader.DownloadFile(t, url)
+			err := downloader.DownloadFile(t, url, cs)
 			if err != nil {
 				return err
 			}
 		} else if strings.HasSuffix(href, "filelists.sqlite.xz") {
 			t := fmt.Sprintf("%d/repodata/filelist.sqlite.xz", version)
-			err := downloader.DownloadFile(t, url)
+			err := downloader.DownloadFile(t, url, cs)
 			if err != nil {
 				return err
 			}
