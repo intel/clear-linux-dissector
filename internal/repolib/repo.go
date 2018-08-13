@@ -97,8 +97,12 @@ func DownloadRepo(version int, url string) error {
 			url, version, href)
 
 		if strings.HasSuffix(href, "other.sqlite.xz") {
-			t := fmt.Sprintf("%d/repodata/other.sqlite.xz", version)
-			err := downloader.DownloadFile(t, url, cs)
+			t := fmt.Sprintf("%d/repodata/other.sqlite", version)
+			err := downloader.DownloadFile(t+".xz", url, cs)
+			if err != nil {
+				return err
+			}
+			err = UnXz(t+".xz", t)
 			if err != nil {
 				return err
 			}
@@ -113,14 +117,24 @@ func DownloadRepo(version int, url string) error {
 				return err
 			}
 		} else if strings.HasSuffix(href, "comps.xml.xz") {
-			t := fmt.Sprintf("%d/repodata/comps.xml.xz", version)
-			err := downloader.DownloadFile(t, url, cs)
+			t := fmt.Sprintf("%d/repodata/comps.xml", version)
+			err := downloader.DownloadFile(t+".xz", url, cs)
+			if err != nil {
+				return err
+			}
+
+			err = UnXz(t+".xz", t)
 			if err != nil {
 				return err
 			}
 		} else if strings.HasSuffix(href, "filelists.sqlite.xz") {
-			t := fmt.Sprintf("%d/repodata/filelist.sqlite.xz", version)
-			err := downloader.DownloadFile(t, url, cs)
+			t := fmt.Sprintf("%d/repodata/filelist.sqlite", version)
+			err := downloader.DownloadFile(t+".xz", url, cs)
+			if err != nil {
+				return err
+			}
+
+			err = UnXz(t+".xz", t)
 			if err != nil {
 				return err
 			}
@@ -158,6 +172,8 @@ func GetPkgMap(version int) (map[string]string, error) {
 }
 
 func UnXz(gazin, gazout string) error {
+	fmt.Printf("Uncompressing %s -> %s\n", gazin, gazout)
+
 	f, err := os.Open(gazin)
 	if err != nil {
 		return err
@@ -177,6 +193,11 @@ func UnXz(gazin, gazout string) error {
 
 	if _, err = io.Copy(w, r); err != nil {
 		return err
+	}
+
+	err = os.Remove(gazin)
+	if err != nil {
+		return nil
 	}
 
 	return nil
