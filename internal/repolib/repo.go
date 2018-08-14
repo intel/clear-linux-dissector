@@ -452,6 +452,18 @@ func GetBundles(clear_version int, base_url string) (map[string][]string, map[st
 			continue
 		}
 
+		// Include package-scope bundles, where each bundle contains
+		// exactly one package that is the same name as the bundle
+		if header.Name == fmt.Sprintf("clr-bundles-%d/packages", clear_version) {
+			scanner := bufio.NewScanner(tr)
+			for scanner.Scan() {
+				l := scanner.Text()
+				if len(l) == 0 || strings.HasPrefix(l, "#") {
+					continue
+				}
+				bundles[l] = []string{l}
+			}
+		}
 		bundle_name := name_from_header(header.Name, clear_version)
 		if bundle_name != "" {
 			scanner := bufio.NewScanner(tr)
