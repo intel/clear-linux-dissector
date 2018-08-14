@@ -63,8 +63,11 @@ func main() {
 	pkgs := make(map[string]bool)
 	for _, target_bundle := range args {
 		if _, ok := bundles[target_bundle]; !ok {
-			fmt.Printf("Bundle %s does not exist!\n", target_bundle)
-			os.Exit(-1)
+			if _, ok := deps[target_bundle]; !ok {
+				fmt.Printf("Bundle %s does not exist!\n",
+					target_bundle)
+				os.Exit(-1)
+			}
 		}
 		for _, p := range bundles[target_bundle] {
 			pkgs[p] = true
