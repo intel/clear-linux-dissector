@@ -62,33 +62,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	deps, bundles, err := repolib.GetBundles(clear_version, base_bundles_url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pkgs_before_deps := make(map[string]bool)
-	for _, target_bundle := range args {
-		for _, p := range bundles[target_bundle] {
-			pkgs_before_deps[p] = true
-		}
-		for _, b := range deps[target_bundle] {
-			for _, p := range bundles[b] {
-				pkgs_before_deps[p] = true
-			}
-		}
-	}
-
-	// use a map to remove duplicate entries
 	pkgs := make(map[string]bool)
-
-	for pkg := range pkgs_before_deps {
-		pkgs[pkg] = true
-		deps_for_pkg, err := repolib.GetDirectDeps(pkg, clear_version)
+	for _, target_bundle := range args {
+		b, err := repolib.GetBundle(clear_version, target_bundle)
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, p := range deps_for_pkg {
+
+		for p := range b["AllPackages"].(map[string]interface{}) {
 			pkgs[p] = true
 		}
 	}

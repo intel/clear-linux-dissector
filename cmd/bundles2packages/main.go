@@ -49,33 +49,15 @@ func main() {
 		}
 	}
 
-	deps, bundles, err := repolib.GetBundles(clear_version, base_url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Compile a complete list of packages from both the
-	// requested bundles and the bundle included from
-	// those bundles.
-	//
-	// This does not include additional packages that each
-	// of these packages depend on
 	pkgs := make(map[string]bool)
 	for _, target_bundle := range args {
-		if _, ok := bundles[target_bundle]; !ok {
-			if _, ok := deps[target_bundle]; !ok {
-				fmt.Printf("Bundle %s does not exist!\n",
-					target_bundle)
-				os.Exit(-1)
-			}
+		b, err := repolib.GetBundle(clear_version, target_bundle)
+		if err != nil {
+			log.Fatal(err)
 		}
-		for _, p := range bundles[target_bundle] {
+
+		for p := range b["AllPackages"].(map[string]interface{}) {
 			pkgs[p] = true
-		}
-		for _, b := range deps[target_bundle] {
-			for _, p := range bundles[b] {
-				pkgs[p] = true
-			}
 		}
 	}
 	for p := range pkgs {

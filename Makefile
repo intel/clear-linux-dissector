@@ -41,10 +41,7 @@ build: gopath
 	go install ${GO_PACKAGE_PREFIX}/cmd/downloadpackages
 	go install ${GO_PACKAGE_PREFIX}/cmd/downloadrepo
 	go install ${GO_PACKAGE_PREFIX}/cmd/image2bundles
-	go install ${GO_PACKAGE_PREFIX}/cmd/packages2packages
 	go install ${GO_PACKAGE_PREFIX}/cmd/packages2source
-	go install ${GO_PACKAGE_PREFIX}/cmd/packages2files
-	go install ${GO_PACKAGE_PREFIX}/cmd/files2package
 
 install: gopath
 	test -d $(DESTDIR)/usr/bin || install -D -d -m 00755 $(DESTDIR)/usr/bin;
@@ -53,10 +50,7 @@ install: gopath
 	install -m 00755 $(GOPATH)/bin/downloadpackages $(DESTDIR)/usr/bin/.
 	install -m 00755 $(GOPATH)/bin/downloadrepo $(DESTDIR)/usr/bin/.
 	install -m 00755 $(GOPATH)/bin/image2bundles $(DESTDIR)/usr/bin/.
-	install -m 00755 $(GOPATH)/bin/packages2packages $(DESTDIR)/usr/bin/.
 	install -m 00755 $(GOPATH)/bin/packages2source $(DESTDIR)/usr/bin/.
-	install -m 00755 $(GOPATH)/bin/packages2files $(DESTDIR)/usr/bin/.
-	install -m 00755 $(GOPATH)/bin/files2package $(DESTDIR)/usr/bin/.
 
 check: gopath
 	go test -cover ${GO_PACKAGE_PREFIX}/...

@@ -2,16 +2,14 @@ package repolib
 
 import (
 	"archive/tar"
-	"bufio"
-	"compress/gzip"
 	"database/sql"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.intel.com/crlynch/clr-dissector/internal/downloader"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -96,173 +94,44 @@ func DownloadRepo(version int, url string) error {
 			"%s/releases/%d/clear/x86_64/os/%s",
 			url, version, href)
 
-		if strings.HasSuffix(href, "other.sqlite.xz") {
-			t := fmt.Sprintf("%d/repodata/other.sqlite", version)
-			err := downloader.DownloadFile(t+".xz", url, cs)
-			if err != nil {
-				return err
-			}
-			err = UnXz(t+".xz", t)
-			if err != nil {
-				return err
-			}
-		} else if strings.HasSuffix(href, "primary.sqlite.xz") {
+		if strings.HasSuffix(href, "primary.sqlite.xz") {
 			t := fmt.Sprintf("%d/repodata/primary.sqlite", version)
 			err := downloader.DownloadFile(t+".xz", url, cs)
 			if err != nil {
 				return err
 			}
-			err = UnXz(t+".xz", t)
+
+			fmt.Printf("Uncompressing %s -> %s\n", t+".xz", t)
+
+			f, err := os.Open(t + ".xz")
 			if err != nil {
 				return err
 			}
-		} else if strings.HasSuffix(href, "comps.xml.xz") {
-			t := fmt.Sprintf("%d/repodata/comps.xml", version)
-			err := downloader.DownloadFile(t+".xz", url, cs)
+			defer f.Close()
+
+			r, err := xz.NewReader(f)
 			if err != nil {
 				return err
 			}
 
-			err = UnXz(t+".xz", t)
+			w, err := os.Create(t)
 			if err != nil {
 				return err
 			}
-		} else if strings.HasSuffix(href, "filelists.sqlite.xz") {
-			t := fmt.Sprintf("%d/repodata/filelist.sqlite", version)
-			err := downloader.DownloadFile(t+".xz", url, cs)
-			if err != nil {
+			defer w.Close()
+
+			if _, err = io.Copy(w, r); err != nil {
 				return err
 			}
 
-			err = UnXz(t+".xz", t)
+			err = os.Remove(t + ".xz")
 			if err != nil {
-				return err
+				return nil
 			}
 		}
 	}
 
 	return nil
-}
-
-func GetFilesMap(version int) (map[int]map[string]bool, error) {
-	res := make(map[int]map[string]bool)
-	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/filelist.sqlite",
-		version))
-	if err != nil {
-		return res, err
-	}
-	defer db.Close()
-
-	rows, err := db.Query("select pkgKey, dirname, filenames from filelist")
-	if err != nil {
-		return res, err
-	}
-	defer rows.Close()
-
-	var key int
-	var dirname, filenames string
-	for rows.Next() {
-		err := rows.Scan(&key, &dirname, &filenames)
-		if err != nil {
-			return nil, err
-		}
-
-		if res[key] == nil {
-			res[key] = make(map[string]bool)
-		}
-		for _, n := range strings.Split(filenames, "/") {
-			res[key][fmt.Sprintf("%s/%s", dirname, n)] = true
-		}
-	}
-
-	return res, nil
-}
-
-func GetFiles(version, key int) ([]string, error) {
-	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/filelist.sqlite",
-		version))
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	q := fmt.Sprintf("select dirname, filenames from filelist where pkgKey='%d';", key)
-	rows, err := db.Query(q)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var res []string
-	var dirname, filenames string
-	for rows.Next() {
-		err := rows.Scan(&dirname, &filenames)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, n := range strings.Split(filenames, "/") {
-			res = append(res, fmt.Sprintf("%s/%s", dirname, n))
-		}
-	}
-
-	return res, nil
-}
-
-func GetPkgKey(version int, name string) (int, error) {
-	var res int
-	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
-		version))
-	if err != nil {
-		return res, err
-	}
-	defer db.Close()
-
-	q := fmt.Sprintf("select pkgKey from packages where name='%s';", name)
-	rows, err := db.Query(q)
-	if err != nil {
-		return res, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&res)
-		if err != nil {
-			return res, err
-		}
-
-		return res, nil
-	}
-
-	return res, errors.New(fmt.Sprintf("%s: Unknown package!", name))
-}
-
-func GetPkgName(version, key int) (string, error) {
-	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
-		version))
-	if err != nil {
-		return "", err
-	}
-	defer db.Close()
-
-	q := fmt.Sprintf("select name from packages where pkgKey='%d';", key)
-	rows, err := db.Query(q)
-	if err != nil {
-		return "", err
-	}
-	defer rows.Close()
-
-	var res string
-	for rows.Next() {
-		err := rows.Scan(&res)
-		if err != nil {
-			return "", err
-		}
-
-		return res, nil
-	}
-
-	return res, errors.New(fmt.Sprintf("%d: Unknown package key!", key))
 }
 
 func GetPkgMap(version int) (map[string]string, error) {
@@ -292,114 +161,6 @@ func GetPkgMap(version int) (map[string]string, error) {
 	return pmap, nil
 }
 
-func UnXz(gazin, gazout string) error {
-	fmt.Printf("Uncompressing %s -> %s\n", gazin, gazout)
-
-	f, err := os.Open(gazin)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	r, err := xz.NewReader(f)
-	if err != nil {
-		return err
-	}
-
-	w, err := os.Create(gazout)
-	if err != nil {
-		return err
-	}
-	defer w.Close()
-
-	if _, err = io.Copy(w, r); err != nil {
-		return err
-	}
-
-	err = os.Remove(gazin)
-	if err != nil {
-		return nil
-	}
-
-	return nil
-}
-
-func getdeps(db *sql.DB, name string, visited map[string]bool) error {
-	// Query list of requirements for the given package
-	q := fmt.Sprintf("select requires.name from packages inner join requires "+
-		"where packages.pkgKey=requires.pkgKey and packages.name='%s';", name)
-	rows, err := db.Query(q)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	rmap := make(map[string]bool)
-	for rows.Next() {
-		var rname string
-		err := rows.Scan(&rname)
-		if err != nil {
-			return err
-		}
-		rmap[rname] = true
-	}
-
-	// Query list of packages that meet the found requirements
-	pmap := make(map[string]bool)
-	for p := range rmap {
-		q := fmt.Sprintf("select packages.name from packages "+
-			"inner join provides where packages.pkgKey=provides.pkgKey "+
-			"and provides.name='%s';", p)
-		rows, err := db.Query(q)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var pname string
-			err := rows.Scan(&pname)
-			if err != nil {
-				return err
-			}
-			pmap[pname] = true
-		}
-	}
-
-	for p := range pmap {
-		if !visited[p] {
-			visited[p] = true
-			err := getdeps(db, p, visited)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func GetDirectDeps(name string, version int) ([]string, error) {
-	dbpath := fmt.Sprintf("%d/repodata/primary.sqlite", version)
-	if _, err := os.Stat(dbpath); os.IsNotExist(err) {
-		return nil, errors.New("Missing DB: " + dbpath)
-	}
-
-	db, err := sql.Open("sqlite3", dbpath)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	visited := make(map[string]bool)
-	getdeps(db, name, visited)
-
-	var res []string
-	for p := range visited {
-		res = append(res, p)
-	}
-	return res, nil
-}
-
 func name_from_header(header string, version int) string {
 	re := regexp.MustCompile(`clr-bundles-[1-9].*/bundles/(.*)`)
 	match := re.FindStringSubmatch(header)
@@ -409,33 +170,41 @@ func name_from_header(header string, version int) string {
 	return match[len(match)-1]
 }
 
-func GetBundles(clear_version int, base_url string) (map[string][]string, map[string][]string, error) {
-	bundles := make(map[string][]string)
-	deps := make(map[string][]string)
+func DownloadBundles(clear_version int) error {
+	bundle_path := fmt.Sprintf("%d/bundles", clear_version)
+	if _, err := os.Stat(bundle_path); !os.IsNotExist(err) {
+		// Already downloaded
+		return nil
+	}
 
-	config_url := fmt.Sprintf("%s/archive/%d.tar.gz",
-		base_url, clear_version)
+	err := os.MkdirAll(bundle_path, 0700)
+	if err != nil {
+		return err
+	}
+
+	config_url := fmt.Sprintf("https://cdn.download.clearlinux.org/"+
+		"packs/%d/pack-os-core-update-index-from-0.tar",
+		clear_version)
 
 	resp, err := http.Get(config_url)
 	if err != nil {
-		return deps, bundles, err
+		return err
 
 	}
 	defer resp.Body.Close()
 
 	if resp.Status != "200 OK" {
-		err := errors.New("clr-bundle release archive not found on server: " +
+		err := errors.New("Bundle manifest not found on server: " +
 			config_url)
-		return deps, bundles, err
+		return err
 	}
 
-	gzr, err := gzip.NewReader(resp.Body)
+	xzr, err := xz.NewReader(resp.Body)
 	if err != nil {
-		return deps, bundles, err
+		return err
 	}
-	defer gzr.Close()
 
-	tr := tar.NewReader(gzr)
+	tr := tar.NewReader(xzr)
 
 	for {
 		header, err := tr.Next()
@@ -445,48 +214,57 @@ func GetBundles(clear_version int, base_url string) (map[string][]string, map[st
 		}
 
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		if header == nil {
 			continue
 		}
 
-		// Include package-scope bundles, where each bundle contains
-		// exactly one package that is the same name as the bundle
-		if header.Name == fmt.Sprintf("clr-bundles-%d/packages", clear_version) {
-			scanner := bufio.NewScanner(tr)
-			for scanner.Scan() {
-				l := scanner.Text()
-				if len(l) == 0 || strings.HasPrefix(l, "#") {
-					continue
-				}
-				bundles[l] = []string{l}
-			}
-		}
-		bundle_name := name_from_header(header.Name, clear_version)
-		if bundle_name != "" {
-			scanner := bufio.NewScanner(tr)
-			for scanner.Scan() {
-				l := scanner.Text()
-
-				if len(l) == 0 || strings.HasPrefix(l, "#") {
-					continue
-				}
-
-				re := regexp.MustCompile(`include\((.*)\)`)
-				match := re.FindStringSubmatch(l)
-				if len(match) == 2 {
-					// depends on another bundle
-					deps[bundle_name] = append(deps[bundle_name],
-						match[1])
-				} else {
-					bundles[bundle_name] = append(bundles[bundle_name], l)
-				}
-			}
+		content, err := ioutil.ReadAll(tr)
+		if err != nil {
+			return err
 		}
 
+		var config map[string]interface{}
+		err = json.Unmarshal(content, &config)
+		if err != nil {
+			continue
+		}
+
+		target := fmt.Sprintf("%d/bundles/%s", clear_version, config["Name"])
+		err = ioutil.WriteFile(target, content, 0644)
+		if err != nil {
+			return err
+		}
 	}
 
-	return deps, bundles, nil
+	return nil
+}
+
+func GetBundle(clear_version int, name string) (map[string]interface{}, error) {
+	var bundle map[string]interface{}
+
+	err := DownloadBundles(clear_version)
+	if err != nil {
+		return bundle, err
+	}
+
+	f, err := os.Open(fmt.Sprintf("%d/bundles/%s", clear_version, name))
+	if err != nil {
+		return bundle, err
+	}
+	defer f.Close()
+
+	content, err := ioutil.ReadAll(f)
+	if err != nil {
+		return bundle, err
+	}
+
+	err = json.Unmarshal(content, &bundle)
+	if err != nil {
+		return bundle, errors.New("Corrupt bundle content")
+	}
+
+	return bundle, nil
 }
