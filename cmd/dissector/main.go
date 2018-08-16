@@ -108,6 +108,10 @@ func main() {
 		target := fmt.Sprintf("%d/source/%s", clear_version,
 			strings.TrimSuffix(fname, ".src.rpm"))
 
+		// Remove the version and release sections from the name
+		l := strings.Split(target, "-")
+		target = strings.Join(l[:len(l)-2], "-")
+
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			continue
 		}
