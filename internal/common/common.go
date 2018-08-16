@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func GetInstalledVersion() (int, error) {
@@ -15,18 +16,25 @@ func GetInstalledVersion() (int, error) {
 	}
 	defer f.Close()
 
+	kmap := make(map[string]string)
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		line := scanner.Text()
-		_, err := fmt.Sscanf(line, "VERSION_ID=%d", &res)
-		if err == nil {
-			break
+		tokens := strings.Split(scanner.Text(), "=")
+		if len(tokens) != 2 {
+			continue
+		}
+		kmap[tokens[0]] = tokens[1]
+	}
+
+	// clear-linux-os
+	if id, ok := kmap["ID"]; ok && id == "clear-linux-os" {
+		if version, ok := kmap["VERSION_ID"]; ok {
+			_, err := fmt.Sscanf(version, "%d", &res)
+			if err == nil {
+				return res, nil
+			}
 		}
 	}
 
-	if res == 0 {
-		return res, errors.New("No installed version available!")
-	}
-
-	return res, nil
+	return res, errors.New("No installed version available!")
 }
