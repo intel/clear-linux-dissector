@@ -58,7 +58,7 @@ software-defined-cockpit
 ````
 #### bundles2packages
 
-The bundles2packages utility takes a list of bundles and returns a list of packages directly defined by those bundles.  The tool does not pull in package dependencies
+The bundles2packages utility takes a list of bundles and returns the full list of packages (both directly listed in the bundle specification and the resulting package dependencies)
 
 ````
 $ bundles2packages --help
@@ -86,31 +86,6 @@ python3-dev
 setuptools
 
 ````
-#### packages2packages
-
-The packages2packages tool takes a list of packages and returns a full list of those packages plus all dependencies.
-
-````
-$ packages2packages --help
-USAGE for packages2packages
-  -clear_version int
-    	Clear Linux version (default -1)
-
-$ packages2packages mcelog
-mcelog-data
-filesystem
-nss-altfiles-lib
-mcelog-bin
-mcelog-config
-libc6
-mcelog
-mcelog-autostart
-glibc-lib-avx2
-clr-systemd-config-data
-mcelog-man
-
-````
-
 #### downloadrepo
 
 The downloadrepo will download the repo metadata for a specific Clear Linux release.
@@ -168,7 +143,7 @@ https://cdn.download.clearlinux.org/releases/24330/clear/source/SRPMS/glibc-2.27
 Each command can either take arguments on the commandline or piped in from stdin.  The following example shows how to initiate a download of all source packages for the currently installed Clear Linux version (where a specific version would need to be passed if this was run on some other OS) for the standard "service-os" image.
 
 ````
-image2bundles -n service-os|bundles2packages |packages2packages |downloadpackages
+image2bundles -n service-os|bundles2packages|downloadpackages
 Downloading 24320/source/libthai-0.1.28-6.src.rpm... 425 kB complete
 Downloading 24320/source/shim-12-13.src.rpm... 1.0 MB complete
 <snip>
