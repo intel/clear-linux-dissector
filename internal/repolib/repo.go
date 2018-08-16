@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 
 	_ "github.com/mutecomm/go-sqlcipher"
@@ -164,15 +163,6 @@ func GetPkgMap(version int) (map[string]string, error) {
 	}
 
 	return pmap, nil
-}
-
-func name_from_header(header string, version int) string {
-	re := regexp.MustCompile(`clr-bundles-[1-9].*/bundles/(.*)`)
-	match := re.FindStringSubmatch(header)
-	if len(match) == 0 {
-		return ""
-	}
-	return match[len(match)-1]
 }
 
 func DownloadBundles(clear_version int) error {
