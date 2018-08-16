@@ -37,6 +37,7 @@ endif
 
 build: gopath
 	go install ${GO_PACKAGE_PREFIX}/cmd/bundles2packages
+	go install ${GO_PACKAGE_PREFIX}/cmd/bundles2files
 	go install ${GO_PACKAGE_PREFIX}/cmd/dissector
 	go install ${GO_PACKAGE_PREFIX}/cmd/downloadpackages
 	go install ${GO_PACKAGE_PREFIX}/cmd/downloadrepo
@@ -46,6 +47,7 @@ build: gopath
 install: gopath
 	test -d $(DESTDIR)/usr/bin || install -D -d -m 00755 $(DESTDIR)/usr/bin;
 	install -m 00755 $(GOPATH)/bin/bundles2packages $(DESTDIR)/usr/bin/.
+	install -m 00755 $(GOPATH)/bin/bundles2files $(DESTDIR)/usr/bin/.
 	install -m 00755 $(GOPATH)/bin/dissector $(DESTDIR)/usr/bin/.
 	install -m 00755 $(GOPATH)/bin/downloadpackages $(DESTDIR)/usr/bin/.
 	install -m 00755 $(GOPATH)/bin/downloadrepo $(DESTDIR)/usr/bin/.
