@@ -108,7 +108,7 @@ func DownloadRepo(version int, url string) error {
 
 			fmt.Printf("Uncompressing %s -> %s\n", db+".xz", db)
 
-			f, err := os.Open(db+".xz")
+			f, err := os.Open(db + ".xz")
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,7 @@ func DownloadRepo(version int, url string) error {
 				return err
 			}
 
-			err = os.Remove(db+".xz")
+			err = os.Remove(db + ".xz")
 			if err != nil {
 				return nil
 			}
@@ -177,7 +177,7 @@ func name_from_header(header string, version int) string {
 
 func DownloadBundles(clear_version int) error {
 	bundle_path := fmt.Sprintf("%d/bundles", clear_version)
-	if _, err := os.Stat(bundle_path); !os.IsNotExist(err) {
+	if _, err := os.Stat(bundle_path + "/.complete"); !os.IsNotExist(err) {
 		// Already downloaded
 		return nil
 	}
@@ -243,6 +243,9 @@ func DownloadBundles(clear_version int) error {
 			return err
 		}
 	}
+
+	f, _ := os.Create(bundle_path + "/.complete")
+	f.Close()
 
 	return nil
 }
