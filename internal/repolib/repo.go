@@ -50,6 +50,12 @@ type OpenChecksum struct {
 }
 
 func DownloadRepo(version int, url string) error {
+	db := fmt.Sprintf("%d/repodata/primary.sqlite", version)
+	if _, err := os.Stat(db); !os.IsNotExist(err) {
+		// Already downloaded
+		return nil
+	}
+
 	config_url := fmt.Sprintf(
 		"%s/releases/%d/clear/x86_64/os/repodata/repomd.xml",
 		url, version)
@@ -95,15 +101,14 @@ func DownloadRepo(version int, url string) error {
 			url, version, href)
 
 		if strings.HasSuffix(href, "primary.sqlite.xz") {
-			t := fmt.Sprintf("%d/repodata/primary.sqlite", version)
-			err := downloader.DownloadFile(t+".xz", url, cs)
+			err := downloader.DownloadFile(db+".xz", url, cs)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("Uncompressing %s -> %s\n", t+".xz", t)
+			fmt.Printf("Uncompressing %s -> %s\n", db+".xz", db)
 
-			f, err := os.Open(t + ".xz")
+			f, err := os.Open(db+".xz")
 			if err != nil {
 				return err
 			}
@@ -114,7 +119,7 @@ func DownloadRepo(version int, url string) error {
 				return err
 			}
 
-			w, err := os.Create(t)
+			w, err := os.Create(db)
 			if err != nil {
 				return err
 			}
@@ -124,7 +129,7 @@ func DownloadRepo(version int, url string) error {
 				return err
 			}
 
-			err = os.Remove(t + ".xz")
+			err = os.Remove(db+".xz")
 			if err != nil {
 				return nil
 			}
