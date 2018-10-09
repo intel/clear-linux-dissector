@@ -18,6 +18,7 @@ package cpio
 
 import (
 	"io"
+	"io/ioutil"
 
 	"github.com/op/go-logging"
 )
@@ -58,4 +59,9 @@ func setupLogging(cmdOut io.Writer, logFile io.Writer, debug bool, cmddebug bool
 	} else if logLevel != nil {
 		logging.SetBackend(logLevel)
 	}
+}
+
+func init() {
+	nullLogger := logging.NewLogBackend(ioutil.Discard, "", 0)
+	logging.SetBackend(nullLogger)
 }
