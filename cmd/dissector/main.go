@@ -10,8 +10,6 @@ import (
 	"log"
 	"os"
 	"strings"
-
-	"github.com/sassoftware/go-rpmutils"
 )
 
 func main() {
@@ -116,18 +114,7 @@ func main() {
 			continue
 		}
 		fmt.Printf("Extracting %s to %s...\n", archive, target)
-		f, err := os.Open(archive)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
-
-		rpm, err := rpmutils.ReadRpm(f)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = rpm.ExpandPayload(target)
+		err = repolib.ExtractRpm(archive, target)
 		if err != nil {
 			log.Fatal(err)
 		}

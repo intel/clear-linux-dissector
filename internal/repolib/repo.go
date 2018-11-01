@@ -16,6 +16,7 @@ import (
 
 	_ "github.com/mutecomm/go-sqlcipher"
 	"github.com/ulikunitz/xz"
+	"github.com/sassoftware/go-rpmutils"
 )
 
 type Repomd struct {
@@ -265,4 +266,23 @@ func GetBundle(clear_version int, name string) (map[string]interface{}, error) {
 	}
 
 	return bundle, nil
+}
+
+func ExtractRpm(archive string, target string) error {
+	f, err := os.Open(archive)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	rpm, err := rpmutils.ReadRpm(f)
+	if err != nil {
+		return err
+	}
+
+	err = rpm.ExpandPayload(target)
+	if err != nil {
+		return err
+	}
+	return nil
 }
