@@ -10,8 +10,6 @@ import (
 	"log"
 	"os"
 	"strings"
-
-	"github.com/sassoftware/go-rpmutils"
 )
 
 func main() {
@@ -27,6 +25,10 @@ func main() {
 	flag.StringVar(&base_bundles_url, "bundles_url",
 		"https://github.com/clearlinux/clr-bundles",
 		"Base URL for downloading release archives of clr-bundles")
+
+	var download_all bool
+	flag.BoolVar(&download_all, "all", false,
+		"Download all sources for the release")
 
 	flag.Usage = func() {
 		fmt.Printf("USAGE for %s\n", os.Args[0])
@@ -62,18 +64,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pkgs := make(map[string]bool)
-	for _, target_bundle := range args {
-		b, err := repolib.GetBundle(clear_version, target_bundle)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for p := range b["AllPackages"].(map[string]interface{}) {
-			pkgs[p] = true
-		}
-	}
-
 	// Query db for map of binary to source packages
 	srpmMap, err := repolib.GetPkgMap(clear_version)
 	if err != nil {
@@ -81,13 +71,32 @@ func main() {
 	}
 
 	downloads := make(map[string]string)
-	for p := range pkgs {
-		if srpmMap[p] == "" {
-			fmt.Printf("No mapping found for %s!\n", p)
-			os.Exit(-1)
+	if download_all {
+		for _, srpm := range srpmMap {
+			downloads[srpm] = fmt.Sprintf("%s/releases/%d/clear/source/SRPMS/%s",
+				base_repo_url, clear_version, srpm)
 		}
-		downloads[srpmMap[p]] = fmt.Sprintf("%s/releases/%d/clear/source/SRPMS/%s",
-			base_repo_url, clear_version, srpmMap[p])
+	} else {
+		pkgs := make(map[string]bool)
+		for _, target_bundle := range args {
+			b, err := repolib.GetBundle(clear_version, target_bundle)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			for p := range b["AllPackages"].(map[string]interface{}) {
+				pkgs[p] = true
+			}
+		}
+
+		for p := range pkgs {
+			if srpmMap[p] == "" {
+				fmt.Printf("No mapping found for %s!\n", p)
+				os.Exit(-1)
+			}
+			downloads[srpmMap[p]] = fmt.Sprintf("%s/releases/%d/clear/source/SRPMS/%s",
+				base_repo_url, clear_version, srpmMap[p])
+		}
 	}
 
 	// Downlaod the source rpms
@@ -116,18 +125,7 @@ func main() {
 			continue
 		}
 		fmt.Printf("Extracting %s to %s...\n", archive, target)
-		f, err := os.Open(archive)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
-
-		rpm, err := rpmutils.ReadRpm(f)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = rpm.ExpandPayload(target)
+		err = repolib.ExtractRpm(archive, target)
 		if err != nil {
 			log.Fatal(err)
 		}
