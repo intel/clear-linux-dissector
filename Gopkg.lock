@@ -38,7 +38,7 @@
   revision = "8c470ded63c3eb27c1aa3e7b08142f70f811e693"
 
 [[projects]]
-  digest = "1:4aeb3860275fa1fd60cccfb5a6ef85da438bf17402e1e84412ade4d4b55066a0"
+  digest = "1:db345c377984d0907323c09a9b17f11d995a59649fd38f909727df358b5f9020"
   name = "github.com/ulikunitz/xz"
   packages = [
     ".",
@@ -47,8 +47,8 @@
     "lzma",
   ]
   pruneopts = "UT"
-  revision = "0c6b41e72360850ca4f98dc341fd999726ea007f"
-  version = "v0.5.4"
+  revision = "590df8077fbcb06ad62d7714da06c00e5dd2316d"
+  version = "v0.5.5"
 
 [[projects]]
   branch = "master"
@@ -60,7 +60,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:750eed65b71884c0f5160863e09d81ad8478ecf6d5ce2cea5d005cedebd68c83"
+  digest = "1:bfd957255a80a23af53f514cbaa5f16061df295e37234b5e0935cf49d2cca650"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -72,7 +72,7 @@
     "openpgp/s2k",
   ]
   pruneopts = "UT"
-  revision = "7c1a557ab941a71c619514f229f0b27ccb0c27cf"
+  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
 
 [solve-meta]
   analyzer-name = "dep"
