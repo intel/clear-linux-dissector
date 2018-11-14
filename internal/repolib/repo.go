@@ -14,7 +14,7 @@ import (
 	"os"
 	"strings"
 
-	_ "github.com/mutecomm/go-sqlcipher"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/ulikunitz/xz"
 	"github.com/sassoftware/go-rpmutils"
 )

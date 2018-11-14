@@ -31,10 +31,6 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/mutecomm/go-sqlcipher"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/sassoftware/go-rpmutils"
 
 [[constraint]]
