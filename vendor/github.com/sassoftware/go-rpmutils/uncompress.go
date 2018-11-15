@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/xi2/xz"
+	"github.com/ulikunitz/xz"
 )
 
 // Wrap RPM payload with uncompress reader, assumes that header has
@@ -68,7 +68,7 @@ func uncompressRpmPayloadReader(r io.Reader, hdr *RpmHeader) (io.Reader, error) 
 	case "bzip2":
 		return bzip2.NewReader(r), nil
 	case "lzma", "xz":
-		return xz.NewReader(r, 0)
+		return xz.NewReader(r)
 	case "uncompressed":
 		return r, nil
 	default:
