@@ -66,6 +66,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Query source package db for map of srpm to sha256
+	hashmap, err := repolib.GetSrpmHashMap(clear_version)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	downloads := make(map[string]string)
 	for _, p := range args {
 		if srpmMap[p] == "" {
@@ -85,7 +91,11 @@ func main() {
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			continue
 		}
-		err := downloader.DownloadFile(target, url, "")
+		if hashmap[fname] == "" {
+			fmt.Printf("No hash found for %s!\n", fname)
+			os.Exit(-1)
+		}
+		err := downloader.DownloadFile(target, url, hashmap[fname])
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -49,16 +49,16 @@ type OpenChecksum struct {
 	Value   string   `xml:",chardata"`
 }
 
-func DownloadRepo(version int, url string) error {
-	db := fmt.Sprintf("%d/repodata/primary.sqlite", version)
+func DownloadRepoInfo(path string, url string) error {
+	db := fmt.Sprintf("%s/repodata/primary.sqlite", path)
 	if _, err := os.Stat(db); !os.IsNotExist(err) {
 		// Already downloaded
 		return nil
 	}
 
 	config_url := fmt.Sprintf(
-		"%s/releases/%d/clear/x86_64/os/repodata/repomd.xml",
-		url, version)
+		"%s/repodata/repomd.xml",
+		url)
 
 	resp, err := http.Get(config_url)
 	if err != nil {
@@ -72,21 +72,11 @@ func DownloadRepo(version int, url string) error {
 		return err
 	}
 	if resp.Status != "200 OK" {
-		return errors.New(fmt.Sprintf("Unable to find release %d on %s",
-			version, url))
+		return errors.New(fmt.Sprintf("Unable to fetch repo %s",
+			url))
 	}
 
-	err = os.MkdirAll(fmt.Sprintf("%d/repodata", version), 0700)
-	if err != nil {
-		return err
-	}
-
-	err = os.MkdirAll(fmt.Sprintf("%d/source", version), 0700)
-	if err != nil {
-		return err
-	}
-
-	err = os.MkdirAll(fmt.Sprintf("%d/srpms", version), 0700)
+	err = os.MkdirAll(fmt.Sprintf("%s/repodata", path), 0700)
 	if err != nil {
 		return err
 	}
@@ -97,8 +87,8 @@ func DownloadRepo(version int, url string) error {
 		href := repomd.Data[i].Location.Href
 		cs := repomd.Data[i].Checksum.Value
 		url := fmt.Sprintf(
-			"%s/releases/%d/clear/x86_64/os/%s",
-			url, version, href)
+			"%s/%s",
+			url, href)
 
 		if strings.HasSuffix(href, "primary.sqlite.xz") {
 			err := downloader.DownloadFile(db+".xz", url, cs)
@@ -139,6 +129,46 @@ func DownloadRepo(version int, url string) error {
 	return nil
 }
 
+func DownloadRepo(version int, url string) error {
+	db := fmt.Sprintf("%d/repodata/primary.sqlite", version)
+	if _, err := os.Stat(db); !os.IsNotExist(err) {
+		// Already downloaded
+		return nil
+	}
+
+	// Download package database for binary package repo
+	repo_path := fmt.Sprintf("%d", version)
+	repo_url := fmt.Sprintf(
+		"%s/releases/%d/clear/x86_64/os",
+		url, version)
+	err := DownloadRepoInfo(repo_path, repo_url)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(fmt.Sprintf("%d/source", version), 0700)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(fmt.Sprintf("%d/srpms", version), 0700)
+	if err != nil {
+		return err
+	}
+
+	// Download package database for source package repo
+	repo_path = fmt.Sprintf("%d/srpms", version)
+	repo_url = fmt.Sprintf(
+		"%s/releases/%d/clear/source/SRPMS",
+		url, version)
+	err = DownloadRepoInfo(repo_path, repo_url)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetPkgMap(version int) (map[string]string, error) {
 	pmap := make(map[string]string)
 	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",
@@ -161,6 +191,33 @@ func GetPkgMap(version int) (map[string]string, error) {
 			return pmap, nil
 		}
 		pmap[name] = srpm
+	}
+
+	return pmap, nil
+}
+
+func GetSrpmHashMap(version int) (map[string]string, error) {
+	pmap := make(map[string]string)
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/srpms/repodata/primary.sqlite",
+		version))
+	if err != nil {
+		return pmap, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("select location_href, pkgId from packages;")
+	if err != nil {
+		return pmap, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var srpm, hash string
+		err := rows.Scan(&srpm, &hash)
+		if err != nil {
+			return pmap, nil
+		}
+		pmap[srpm] = hash
 	}
 
 	return pmap, nil
