@@ -29,6 +29,21 @@ func (wc WriteCounter) PrintProgress() {
 		humanize.Bytes(wc.Total))
 }
 
+func ChecksumFile(filepath string) (string, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, f); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
 func DownloadFile(filepath, url, checksum string) error {
 	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
 		return nil
@@ -59,18 +74,11 @@ func DownloadFile(filepath, url, checksum string) error {
 	fmt.Print("\n")
 
 	if checksum != "" {
-		f, err := os.Open(tmp)
+		actual_checksum, err := ChecksumFile(tmp)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-
-		hash := sha256.New()
-		if _, err := io.Copy(hash, f); err != nil {
-			return err
-		}
-
-		if hex.EncodeToString(hash.Sum(nil)) != checksum {
+		if actual_checksum != checksum {
 			os.Remove(tmp)
 			return errors.New("Failed download checksum!")
 		}
