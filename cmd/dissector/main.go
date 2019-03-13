@@ -10,6 +10,8 @@ import (
 	"log"
 	"os"
 	"strings"
+	"io/ioutil"
+	"strconv"
 )
 
 func main() {
@@ -76,6 +78,52 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if download_all {
+		// Find most recent version subdir with downloaded SRPMs
+		files, err := ioutil.ReadDir("./")
+		if err != nil {
+			log.Fatal(err)
+		}
+		maxoldver := 0
+		for _, f := range files {
+			if err == nil && f.IsDir() {
+				if vernum, err := strconv.Atoi(f.Name()); err == nil && vernum < clear_version && vernum > maxoldver {
+					spath := fmt.Sprintf("%s/srpms/.done", f.Name())
+					_, err := os.Stat(spath)
+					if err == nil {
+						maxoldver = vernum
+					}
+				}
+			}
+		}
+		if maxoldver > 0 {
+			// Grab any previously downloaded SRPMs whose sha256sums match
+			olddir := fmt.Sprintf("%d", maxoldver)
+			for _, srpm := range srpmMap {
+				oldpth := fmt.Sprintf("%s/srpms/%s", olddir, srpm)
+				_, err := os.Stat(oldpth)
+				if err == nil {
+					newpth := fmt.Sprintf("%d/srpms/%s", clear_version, srpm)
+					_, err := os.Stat(newpth)
+					if os.IsNotExist(err) {
+						if hashmap[srpm] == "" {
+							fmt.Printf("No hash found for %s!\n", srpm)
+							os.Exit(-1)
+						}
+						actual_checksum, err := downloader.ChecksumFile(oldpth)
+						if err != nil {
+							continue
+						}
+						if actual_checksum == hashmap[srpm] {
+							fmt.Printf("Copying previously downloaded %s\n", srpm)
+							os.Link(oldpth, newpth)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	downloads := make(map[string]string)
 	if download_all {
 		for _, srpm := range srpmMap {
@@ -117,6 +165,18 @@ func main() {
 		}
 		err := downloader.DownloadFile(target, url, hashmap[fname])
 		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if download_all {
+		// We're done downloading srpms, mark the directory as done
+		dotfpath := fmt.Sprintf("%d/srpms/.done", clear_version)
+		f, err := os.OpenFile(dotfpath, os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := f.Close(); err != nil {
 			log.Fatal(err)
 		}
 	}
