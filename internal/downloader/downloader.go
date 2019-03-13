@@ -44,7 +44,7 @@ func ChecksumFile(filepath string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-func DownloadFile(filepath, url, checksum string) error {
+func DownloadFile(filepath, url, checksum, extra string) error {
 	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
 		return nil
 	}
@@ -64,7 +64,7 @@ func DownloadFile(filepath, url, checksum string) error {
 	}
 	defer resp.Body.Close()
 
-	counter := &WriteCounter{Name: filepath}
+	counter := &WriteCounter{Name: extra + filepath}
 	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
 	if err != nil {
 		return err

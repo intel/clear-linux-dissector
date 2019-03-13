@@ -153,8 +153,11 @@ func main() {
 		}
 	}
 
-	// Downlaod the source rpms
+	// Download the source rpms
+	i := 0
+	dlcount := len(downloads)
 	for fname, url := range downloads {
+		i++
 		target := fmt.Sprintf("%d/srpms/%s", clear_version, fname)
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			continue
@@ -163,7 +166,8 @@ func main() {
 			fmt.Printf("No hash found for %s!\n", fname)
 			os.Exit(-1)
 		}
-		err := downloader.DownloadFile(target, url, hashmap[fname])
+		extra := fmt.Sprintf("(%d/%d) ", i, dlcount)
+		err := downloader.DownloadFile(target, url, hashmap[fname], extra)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -182,7 +186,9 @@ func main() {
 	}
 
 	// Unarchive the source rpms
+	i = 0
 	for fname := range downloads {
+		i++
 		archive := fmt.Sprintf("%d/srpms/%s", clear_version, fname)
 		target := fmt.Sprintf("%d/source/%s", clear_version,
 			strings.TrimSuffix(fname, ".src.rpm"))
@@ -194,7 +200,7 @@ func main() {
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			continue
 		}
-		fmt.Printf("Extracting %s to %s...\n", archive, target)
+		fmt.Printf("Extracting (%d/%d) %s to %s...\n", i, dlcount, archive, target)
 		err = repolib.ExtractRpm(archive, target)
 		if err != nil {
 			log.Fatal(err)

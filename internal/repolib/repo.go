@@ -91,7 +91,7 @@ func DownloadRepoInfo(path string, url string) error {
 			url, href)
 
 		if strings.HasSuffix(href, "primary.sqlite.xz") {
-			err := downloader.DownloadFile(db+".xz", url, cs)
+			err := downloader.DownloadFile(db+".xz", url, cs, "")
 			if err != nil {
 				return err
 			}
