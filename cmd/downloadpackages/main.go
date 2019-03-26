@@ -82,7 +82,10 @@ func main() {
 			base_url, clear_version, srpmMap[p])
 	}
 
+	i := 0
+	dlcount := len(downloads)
 	for fname, url := range downloads {
+		i++
 		target := fmt.Sprintf("%d/source/%s", clear_version, fname)
 		if skip_download == true {
 			fmt.Printf("Skipping %s\n", url)
@@ -95,7 +98,8 @@ func main() {
 			fmt.Printf("No hash found for %s!\n", fname)
 			os.Exit(-1)
 		}
-		err := downloader.DownloadFile(target, url, hashmap[fname])
+		extra := fmt.Sprintf("(%d/%d) ", i, dlcount)
+		err := downloader.DownloadFile(target, url, hashmap[fname], extra)
 		if err != nil {
 			log.Fatal(err)
 		}
