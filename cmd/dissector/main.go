@@ -131,7 +131,7 @@ func main() {
 				base_repo_url, clear_version, srpm)
 		}
 	} else {
-		pkgs := make(map[string]bool)
+		requirements := make(map[string]bool)
 		for _, target_bundle := range args {
 			b, err := repolib.GetBundle(clear_version, target_bundle)
 			if err != nil {
@@ -139,17 +139,17 @@ func main() {
 			}
 
 			for p := range b["AllPackages"].(map[string]interface{}) {
-				pkgs[p] = true
+				requirements[p] = true
 			}
 		}
 
-		for p := range pkgs {
-			if srpmMap[p] == "" {
-				fmt.Printf("No mapping found for %s!\n", p)
-				os.Exit(-1)
-			}
-			downloads[srpmMap[p]] = fmt.Sprintf("%s/releases/%d/clear/source/SRPMS/%s",
-				base_repo_url, clear_version, srpmMap[p])
+		pkgs, err := repolib.QueryReqs(clear_version, requirements, "rpm_sourcerpm")
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, p := range pkgs {
+			downloads[p] = fmt.Sprintf("%s/releases/%d/clear/source/SRPMS/%s",
+				base_repo_url, clear_version, p)
 		}
 	}
 

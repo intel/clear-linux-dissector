@@ -169,6 +169,48 @@ func DownloadRepo(version int, url string) error {
 	return nil
 }
 
+func QueryReqs(version int, requirements map[string]bool, field string) ([]string, error) {
+	db, err := sql.Open("sqlite3",
+		fmt.Sprintf("%d/repodata/primary.sqlite",
+		version))
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	var initial bool = true
+	var b strings.Builder
+	fmt.Fprintf(&b, "SELECT DISTINCT packages.%s FROM packages "+
+		"INNER JOIN provides ON packages.pkgKey=provides.pkgKey",
+		field)
+	for req := range requirements {
+		if initial == true {
+			fmt.Fprintf(&b, " WHERE provides.name=\"%s\"", req)
+			initial = false
+		} else {
+			fmt.Fprintf(&b, " OR provides.name=\"%s\"", req)
+		}
+	}
+	b.WriteString(";")
+	rows, err := db.Query(b.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var r []string
+	for rows.Next() {
+		var value string
+		err := rows.Scan(&value)
+		if err != nil {
+			return nil, err
+		}
+		r = append(r, value)
+	}
+
+	return r, nil
+}
+
 func GetPkgMap(version int) (map[string]string, error) {
 	pmap := make(map[string]string)
 	db, err := sql.Open("sqlite3", fmt.Sprintf("%d/repodata/primary.sqlite",

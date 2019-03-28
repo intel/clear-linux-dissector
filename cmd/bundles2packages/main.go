@@ -49,7 +49,7 @@ func main() {
 		}
 	}
 
-	pkgs := make(map[string]bool)
+	requirements := make(map[string]bool)
 	for _, target_bundle := range args {
 		b, err := repolib.GetBundle(clear_version, target_bundle)
 		if err != nil {
@@ -57,10 +57,15 @@ func main() {
 		}
 
 		for p := range b["AllPackages"].(map[string]interface{}) {
-			pkgs[p] = true
+			requirements[p] = true
 		}
 	}
-	for p := range pkgs {
+
+	pkgs, err := repolib.QueryReqs(clear_version, requirements, "name")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, p := range pkgs {
 		fmt.Println(p)
 	}
 }
