@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.intel.com/crlynch/clr-dissector/internal/common"
+	"github.com/intel/clear-linux-dissector/internal/common"
 	"io/ioutil"
 	"log"
 	"net/http"

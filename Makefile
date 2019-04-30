@@ -8,7 +8,7 @@
 
 .NOTPARALLEL:
 
-GO_PACKAGE_PREFIX := github.intel.com/crlynch/clr-dissector
+GO_PACKAGE_PREFIX := github.com/intel/clear-linux-dissector
 
 .PHONY: gopath
 

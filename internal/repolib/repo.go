@@ -7,7 +7,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.intel.com/crlynch/clr-dissector/internal/downloader"
+	"github.com/intel/clear-linux-dissector/internal/downloader"
 	"io"
 	"io/ioutil"
 	"net/http"
