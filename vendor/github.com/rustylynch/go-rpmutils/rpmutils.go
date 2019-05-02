@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/sassoftware/go-rpmutils/cpio"
+	"github.com/rustylynch/go-rpmutils/cpio"
 )
 
 type Rpm struct {
@@ -82,9 +82,7 @@ func ReadHeader(f io.Reader) (*RpmHeader, error) {
 		return nil, err
 	}
 
-	sha1 := "" // need to read this from the sig header.
-
-	genHeader, err := readHeader(f, sha1, sigHeader.isSource, false)
+	genHeader, err := readHeader(f, getSha1(sigHeader), sigHeader.isSource, false)
 	if err != nil {
 		return nil, err
 	}

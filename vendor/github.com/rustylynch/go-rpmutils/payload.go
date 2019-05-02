@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/sassoftware/go-rpmutils/cpio"
+	"github.com/rustylynch/go-rpmutils/cpio"
 )
 
 type PayloadReader interface {

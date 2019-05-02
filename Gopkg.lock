@@ -18,27 +18,19 @@
   version = "v1.10.0"
 
 [[projects]]
-  digest = "1:5b3b29ce0e569f62935d9541dff2e16cc09df981ebde48e82259076a73a3d0c7"
-  name = "github.com/op/go-logging"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b2cb9fa56473e98db8caba80237377e83fe44db5"
-  version = "v1"
-
-[[projects]]
   branch = "master"
-  digest = "1:25bdedddc33db4ed29c794957f523c3f60c9a335039fd9d3a78d67499d1a744f"
-  name = "github.com/sassoftware/go-rpmutils"
+  digest = "1:d0e427bcb50cf8e0d0dda195c75ed9bb16041432e2c9e5a42beb375baff5fac0"
+  name = "github.com/rustylynch/go-rpmutils"
   packages = [
     ".",
     "cpio",
     "fileutil",
   ]
   pruneopts = "UT"
-  revision = "8c470ded63c3eb27c1aa3e7b08142f70f811e693"
+  revision = "1da73ade7c553bb48866ee2b543f721dd00f3102"
 
 [[projects]]
-  digest = "1:db345c377984d0907323c09a9b17f11d995a59649fd38f909727df358b5f9020"
+  digest = "1:2643d81498e38e44bdcf480be199cac55f29e97403b0342d962824bfe9960722"
   name = "github.com/ulikunitz/xz"
   packages = [
     ".",
@@ -47,20 +39,12 @@
     "lzma",
   ]
   pruneopts = "UT"
-  revision = "590df8077fbcb06ad62d7714da06c00e5dd2316d"
-  version = "v0.5.5"
+  revision = "6f934d456d51e742b4eeab20d925a827ef22320a"
+  version = "v0.5.6"
 
 [[projects]]
   branch = "master"
-  digest = "1:0dfba983988bcd90e6dd30b9bfdb9685ff530dbf61db3706e55372e975b1d8bc"
-  name = "github.com/xi2/xz"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "48954b6210f8d154cb5f8484d3a3e1f83489309e"
-
-[[projects]]
-  branch = "master"
-  digest = "1:bfd957255a80a23af53f514cbaa5f16061df295e37234b5e0935cf49d2cca650"
+  digest = "1:3ffd251738e94a21e80f353dc954e00b84e0789fa46084edf71be5e47432d3ef"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -72,7 +56,7 @@
     "openpgp/s2k",
   ]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "a29dc8fdc73485234dbef99ebedb95d2eced08de"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -80,7 +64,7 @@
   input-imports = [
     "github.com/dustin/go-humanize",
     "github.com/mattn/go-sqlite3",
-    "github.com/sassoftware/go-rpmutils",
+    "github.com/rustylynch/go-rpmutils",
     "github.com/ulikunitz/xz",
   ]
   solver-name = "gps-cdcl"

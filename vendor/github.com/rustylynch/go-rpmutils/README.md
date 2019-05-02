@@ -49,4 +49,4 @@ func main() {
 
 ## License
 
-go-rpmutils is released under the Apache 2.0 license. See [LICENSE](https://github.com/sassoftware/go-rpmutils/blob/master/LICENSE).
+go-rpmutils is released under the Apache 2.0 license. See [LICENSE](https://github.com/rustylynch/go-rpmutils/blob/master/LICENSE).
