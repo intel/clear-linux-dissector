@@ -31,7 +31,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/sassoftware/go-rpmutils"
+  name = "github.com/rustylynch/go-rpmutils"
 
 [[constraint]]
   name = "github.com/ulikunitz/xz"

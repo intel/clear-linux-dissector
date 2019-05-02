@@ -16,7 +16,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/ulikunitz/xz"
-	"github.com/sassoftware/go-rpmutils"
+	"github.com/rustylynch/go-rpmutils"
 )
 
 type Repomd struct {
