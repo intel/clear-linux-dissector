@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/ulikunitz/xz"
 	"github.com/rustylynch/go-rpmutils"
+	"github.com/ulikunitz/xz"
 )
 
 type Repomd struct {
@@ -172,7 +172,7 @@ func DownloadRepo(version int, url string) error {
 func QueryReqs(version int, requirements map[string]bool, field string) ([]string, error) {
 	db, err := sql.Open("sqlite3",
 		fmt.Sprintf("%d/repodata/primary.sqlite",
-		version))
+			version))
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func DownloadBundles(clear_version int) error {
 	}
 
 	config_url := fmt.Sprintf("https://cdn.download.clearlinux.org/"+
-		"packs/%d/pack-os-core-update-index-from-0.tar",
+		"update/%d/pack-os-core-update-index-from-0.tar",
 		clear_version)
 
 	resp, err := http.Get(config_url)
