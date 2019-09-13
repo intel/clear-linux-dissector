@@ -2,20 +2,20 @@
 
 
 [[projects]]
-  branch = "master"
   digest = "1:6f9339c912bbdda81302633ad7e99a28dfa5a639c864061f1929510a9a64aa74"
   name = "github.com/dustin/go-humanize"
   packages = ["."]
   pruneopts = "UT"
   revision = "9f541cc9db5d55bce703bd99987c9d5cb8eea45e"
+  version = "v1.0.0"
 
 [[projects]]
-  digest = "1:4a49346ca45376a2bba679ca0e83bec949d780d4e927931317904bad482943ec"
+  digest = "1:79e87abf06b873987dee86598950f5b51732ac454d5a5cab6445a14330e6c9e3"
   name = "github.com/mattn/go-sqlite3"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c7c4067b79cc51e6dfdcef5c702e74b1e0fa7c75"
-  version = "v1.10.0"
+  revision = "b612a2feea6aa87c6d052d9086572551df06497e"
+  version = "v1.11.0"
 
 [[projects]]
   branch = "master"
@@ -27,7 +27,7 @@
     "fileutil",
   ]
   pruneopts = "UT"
-  revision = "1da73ade7c553bb48866ee2b543f721dd00f3102"
+  revision = "16a6be0f639218ec48113c63b4a2708e430c6e7c"
 
 [[projects]]
   digest = "1:2643d81498e38e44bdcf480be199cac55f29e97403b0342d962824bfe9960722"
@@ -44,7 +44,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3ffd251738e94a21e80f353dc954e00b84e0789fa46084edf71be5e47432d3ef"
+  digest = "1:50804d40964a0c59170e827824e79bbf810cc10ae57603d8facce8a1f48f9a83"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -56,7 +56,7 @@
     "openpgp/s2k",
   ]
   pruneopts = "UT"
-  revision = "a29dc8fdc73485234dbef99ebedb95d2eced08de"
+  revision = "227b76d455e791cb042b03e633e2f7fbcfdf74a5"
 
 [solve-meta]
   analyzer-name = "dep"
