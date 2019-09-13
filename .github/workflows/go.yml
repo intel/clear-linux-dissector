@@ -17,8 +17,11 @@ jobs:
       uses: actions/checkout@v1
       
     - name: Build
-      run: make
-      
+      run: |
+        make
+        mkdir -p /home/runner/go/src/github.com/intel/
+        ln -s `pwd` /home/runner/go/src/github.com/intel/
+        
     - name: Run go testcases
       run: |
         cd tests
